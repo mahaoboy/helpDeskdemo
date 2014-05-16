@@ -1,0 +1,14 @@
+                <html>
+                        <head><title>Sample velocity page</title></head>
+                        <body bgcolor="#ffffff">
+                                <center>
+                                        <h2>Hello My First Velocity</h2>
+                                        <table width="100" cellpadding="5" cellspacing="1" bordercolor="#333333">
+                                                <tr><td bgcolor="#eeeeee" align="center">name list</td></tr>
+                                                #foreach ($name in $theList)
+                                                <tr><td bgcolor="#6666FF" align="center">$name</td></tr>
+                                                #end
+                                        </table>
+                                </center>
+                        </body>
+                </html>

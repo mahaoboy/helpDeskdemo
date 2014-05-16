@@ -1,0 +1,73 @@
+<html>
+  <head>
+    <title>Confluence Page</title>
+	<style type="text/css">
+		body{margin:50px;background-color: #EEEEEE;}
+		.field-group{margin: 10px;}
+		#warn, .warn{font-size:20px; font-weight:bold; color:red;}
+		#title{font-size:25px; font-weight:bold; }
+		
+		#include("css\\jqModal.css")
+		
+		</style>
+		<script type="text/javascript">
+		
+		#include("js\\jquery-1.10.2.min.js")
+		#include("js\\jquery-migrate-1.2.1.min.js")
+		#include("js\\jqModal.js")
+		
+		#include("js\\ajax.js")
+		</script>
+		
+			
+		
+		
+  </head>
+  <body>
+	<center>
+	<Span id="title">添加锚点</span>
+    <form id="admin" class="aui" method="post" action="/TomCat7/Confluence">
+        <div class="field-group">
+             <label for="content">Confluence页面地址：</label>
+             <input type="text" id="confluencesite" name="confluencesite" class="text" value="#if($confluencesite)$confluencesite#end">
+         </div>
+
+		<div class="field-group">
+             <label for="content">段落标题（Paragraph H1）:</label>
+             <input type="text" id="summary" name="summary" class="text" value="#if($summary)$summary#end">
+        </div>
+		
+     
+         <div class="field-group">
+             <label for="content">登录名（User Name）:</label>
+             <input type="text" id="username" name="username" class="text" value="#if($username)$username#end">
+        </div>
+         <div class="field-group">
+             <label for="content">密码（Pass Word）:</label>
+             <input type="password" id="password" name="password" class="text" value="#if($password)$password#end">
+        </div>
+        <div class="field-group">
+             <input type="submit" value="添加" class="button">
+        </div>
+    </form>
+	<Span id="warn">#if($warn)$warn#end</span>
+    
+    <div id="bodycontent" >
+    <table width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
+		<tr><td width="30%" bgcolor="#6666FF" align="center">展示锚点页头</td></tr>
+            <tr><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">    <a href="#" class="jqModal">#if($summary)$summary#end</a></td></tr>
+				<tr><td width="30%" bgcolor="#6666FF" align="center">页尾</td></tr>
+    </table>
+
+    </div>
+
+
+<div class="jqmWindow" id="dialog">
+
+<a href="#" class="jqmClose"　style="margin-left: -520px;">关闭</a>
+<hr>
+	<span id="pagebody"></span>
+</div>
+    </center>
+  </body>
+</html>

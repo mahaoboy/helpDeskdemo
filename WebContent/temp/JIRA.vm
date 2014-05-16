@@ -1,0 +1,107 @@
+<html>
+  <head>
+    <title>JIRA Form Page</title>
+	<style type="text/css">
+		body{margin:50px;background-color: #EEEEEE;}
+		.field-group{margin: 10px;}
+		#warn, .warn{font-size:20px; font-weight:bold; color:red;}
+		#title{font-size:25px; font-weight:bold; }
+		</style>
+  </head>
+  <body>
+	<center>
+	<Span id="title">创建工单</span>
+    <form id="admin" class="aui" method="post" action="/TomCat7/JIRA">
+        <div class="field-group">
+             <label for="content">JIRA地址（JIRA site URL）：</label>
+             <input type="text" id="jirasite" name="jirasite" class="text" value="#if($jirasite)$jirasite#end">
+         </div>
+         <div class="field-group">
+             <label for="content">产品名称（Project Key）:</label>
+             <input type="text" id="project" name="project" class="text" value="#if($project)$project#end">
+        </div>
+		<div class="field-group">
+             <label for="content">主题（Title）:</label>
+             <input type="text" id="summary" name="summary" class="text" value="#if($summary)$summary#end">
+        </div>
+         <div class="field-group">
+             <label for="content">工单类型（Issue Type）:</label>
+			 <select name="issuetype">
+                  <option value="Task" #if($issuetype&&$issuetype!="saab") selected="selected" #end>转开发</option>
+                  <option value="saab" #if($issuetype&&$issuetype=="saab") selected="selected" #end>普通工单</option>
+             </select>
+            <!-- <input type="text" id="issuetype" name="issuetype" class="text" value="#if($issuetype)$issuetype#end"> -->
+        </div>
+
+         <div class="field-group">
+             <label for="content">描述（Description）:</label>
+             <input type="text" id="description" name="description" class="text" value="#if($description)$description#end">
+        </div>
+         <div class="field-group">
+             <label for="content">登录名（User Name）:</label>
+             <input type="text" id="username" name="username" class="text" value="#if($username)$username#end">
+        </div>
+         <div class="field-group">
+             <label for="content">密码（Pass Word）:</label>
+             <input type="password" id="password" name="password" class="text" value="#if($password)$password#end">
+        </div>
+        <div class="field-group">
+             <input type="submit" value="创建工单" class="button">
+        </div>
+    </form>
+	<Span id="warn">#if($warn)$warn#end</span>
+    
+    <div id="bodycontent" >
+    
+    #if($meth == "POST")
+    <table width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
+            <tr><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">新建工单内容</td></tr>
+            
+            <tr><td width="30%" bgcolor="#6666FF" align="center">产品名称</td><td width="70%" bgcolor="#6666FF" align="center">#if($project)$project#end</td></tr>
+            <tr><td bgcolor="#6666FF" align="center">主题</td><td bgcolor="#6666FF" align="center">#if($summary)$summary#end</td></tr>
+			<tr><td bgcolor="#6666FF" align="center">工单类型</td><td bgcolor="#6666FF" align="center">#if($issuetype!="saab") 转开发 #else 普通工单 #end</td></tr>
+			<tr><td bgcolor="#6666FF" align="center">描述</td><td bgcolor="#6666FF" align="center">#if($description)$description#end</td></tr>
+			<tr><td bgcolor="#6666FF" align="center">报告人</td><td bgcolor="#6666FF" align="center">#if($username)$username#end</td></tr>
+				#if($issuekey && $issuelink)
+					<tr><td bgcolor="#6666FF" align="center">JIRA Issue</td><td bgcolor="#6666FF" align="center"><a href="$issuelink" target="_blank">$issuekey</a></td></tr>
+				#end
+    </table>
+    #end
+    #if($itemlist)
+		<Span id="title">工单列表</span>
+    <table width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
+            <tr><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">产品名称</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">主题</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">工单类型</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">描述</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">JIRA issue 信息 </td></tr>
+            #foreach ($content in $itemlist)
+            <tr>
+						<td bgcolor="#6666FF" align="center">$content.get("project")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("summary")</td>
+						<td bgcolor="#6666FF" align="center">#if($content.get("issuetype")!="saab") 转开发 #else 普通工单 #end</td>
+						<td bgcolor="#6666FF" align="center">$content.get("description")</td>
+						#if($content.get("issuekey"))
+							<td align="center">
+								<table  width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
+									<tr>
+										<td bgcolor="#6666FF" align="center">JIRA Issue Key</td>
+										<td bgcolor="#6666FF" align="center">Issue 状态</td>
+										<td bgcolor="#6666FF" align="center">分配人</td>
+										<td bgcolor="#6666FF" align="center">发布版本</td>
+									</tr>
+									<tr>
+										<td bgcolor="#6666FF" align="center"><a href="$content.get('issuelink')" target="_blank">$content.get("issuekey")</a></td>
+										<td bgcolor="#6666FF" align="center">#if($content.get("jiraissueinfo")!="")$content.get("jiraissueinfo").get("status")#else <span style="display:none">  $content.get("jiraissuewarn")  </span> #end</td>
+										<td bgcolor="#6666FF" align="center">#if($content.get("jiraissueinfo")!="")$content.get("jiraissueinfo").get("assignee")#else <span style="display:none>  $content.get("jiraissuewarn")  </span> #end</td>
+										<td bgcolor="#6666FF" align="center">#if($content.get("jiraissueinfo")!="")$content.get("jiraissueinfo").get("fixVersions")#else <span style="display:none>  $content.get("jiraissuewarn")  </span> #end</td>
+									</tr>
+								</table>
+							</td>
+						#else
+							<td bgcolor="#6666FF" align="center">无相关JIRA Issue</td>
+						#end
+			</tr>
+			#end
+    </table>
+    #end
+    </div>
+    </center>
+  </body>
+</html>

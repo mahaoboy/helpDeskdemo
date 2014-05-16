@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://java.sun.com/xml/ns/javaee"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	id="WebApp_ID" version="3.0">
+	<display-name>TomCat7</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list>
+	<servlet>
+		<servlet-name>JIRA</servlet-name>
+		<servlet-class>com.velocitydemo.velocityhandler.JIRA</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>JIRA</servlet-name>
+		<url-pattern>/JIRA</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>/JIRA</welcome-file>
+	</welcome-file-list>
+
+	<servlet>
+		<servlet-name>Login</servlet-name>
+		<servlet-class>com.velocitydemo.velocityhandler.Login</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Login</servlet-name>
+		<url-pattern>/Login</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>/Login</welcome-file>
+	</welcome-file-list>
+
+	<servlet>
+		<servlet-name>Confluence</servlet-name>
+		<servlet-class>com.velocitydemo.velocityhandler.Confluence</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Confluence</servlet-name>
+		<url-pattern>/Confluence</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>/Confluence</welcome-file>
+	</welcome-file-list>
+	<servlet>
+		<servlet-name>GetPara</servlet-name>
+		<servlet-class>com.velocitydemo.velocityhandler.GetPara</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>GetPara</servlet-name>
+		<url-pattern>/GetPara</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>/GetPara</welcome-file>
+	</welcome-file-list>
+	<listener>
+		<listener-class>com.velocitydemo.velocityhandler.HttpSessionCollector</listener-class>
+	</listener>
+</web-app>
+
