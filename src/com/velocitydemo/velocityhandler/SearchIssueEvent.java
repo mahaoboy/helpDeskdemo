@@ -1,40 +1,43 @@
 package com.velocitydemo.velocityhandler;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Vector;
 
+import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.view.VelocityViewServlet;
 
-public class Login extends VelocityViewServlet {
+public class SearchIssueEvent extends VelocityViewServlet{
+	private IssueInfo issueInfo = new IssueInfo();
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
 	private String path;
-	private String PROPERTYNAME = "WEB-INF\\ldap.conf";
+	private String jirasiteUrl;
+	private String Project;
+	private String Username;
+	private String Password;
+
+	private String PROPERTYNAME = "WEB-INF\\jira.conf";
 	private static HashMap<String, String> properties = new HashMap<String, String>();
-	private LDAPAuthentication ldapc;
-	private String HelpDeskPath = "HelpDesk";
-	
+
+	private String loginPath = "Login";
+	private String searchPath = "SearchIssueEvent";
+
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
 		Properties prop = new Properties();// 设置vm模板的装载路径
+		path = this.getServletContext().getRealPath("/");
 		// String path =
 		// this.getClass().getClassLoader().getResource("").getPath();
-		path = this.getServletContext().getRealPath("/");
 		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "GBK");
@@ -44,71 +47,58 @@ public class Login extends VelocityViewServlet {
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
+
 		try {
 			if (properties.isEmpty()) {
 				properties = CommonUtil.readFile(path + PROPERTYNAME);
 			}
-			ldapc = new LDAPAuthentication(properties);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		if (!properties.isEmpty()) {
+			this.jirasiteUrl = properties.get("Protocol") + "://" +properties.get("URL") + ":"
+					+ properties.get("Port") + "/";
+			this.Project = properties.get("Project");
+			this.Username = properties.get("Username");
+			this.Password = properties.get("Password");
+			issueInfo.setAduserName(properties.get("姓名"));
+			issueInfo.setDepartmentName(properties.get("部门"));
+			issueInfo.setInformationName(properties.get("联系电话邮件地址"));
+		}
 	}
 
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
 		String meth = request.getMethod();
-		String uname = "";
+		String aduname = "xx";
+		/*
+		 * if (IsLoggedIn.checkLogin(response, request)) { uname =
+		 * IsLoggedIn.getUser(response, request); } else { try {
+		 * response.sendRedirect(loginPath); } catch (IOException e) { // TODO
+		 * Auto-generated catch block e.printStackTrace(); } }
+		 */
+		ctx.put("uname", aduname);
+		ctx.put("meth", meth);
+		// System.out.println("Method:" + meth);
+		if (meth == "POST") {
 
-		if (IsLoggedIn.checkLogin(response, request)) {
-			uname = IsLoggedIn.getUser(response, request);
-			try {
-				response.sendRedirect(HelpDeskPath);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
 
-		if (meth.equals("POST")) {
-			String inusername = request.getParameter("username").isEmpty() ? ""
-					: request.getParameter("username");
-			String inpassword = request.getParameter("password").isEmpty() ? ""
-					: request.getParameter("password");
-			if (inusername.isEmpty() || inpassword.isEmpty()) {
-				String warn = "用户名或密码不能为空";
-				ctx.put("meth", warn);
-			} else {
-				if (ldapc.authenricate(inusername, inpassword)) {
-					IsLoggedIn.setLogin(response, request, inusername);
-					ctx.put("meth", inusername);
-					try {
-						response.sendRedirect(HelpDeskPath);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-				} else {
-					String warn = "登陆失败,用户名或密码错误";
-					ctx.put("meth", warn);
-				}
-			}
-		} else if (meth.equals("GET")) {
-			ctx.put("meth", "");
 		}
-		
-		ctx.put("uname", uname);
+		ctx.put("Createdissuekey", request.getAttribute("Createdissuekey"));
+		// read file store
+		Vector itemlist = issueInfo.getItemList(velo.getProperty(
+				Velocity.FILE_RESOURCE_LOADER_PATH).toString());
+		ctx.put("itemlist", itemlist);
+
 		response.setContentType("text/html; charset=gb2312");
 		Template template = new Template();
 		try {
-			template = velo.getTemplate("login.vm");
+			template = velo.getTemplate("SearchIssueEvent.vm");
 		} catch (Exception e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return template;
 	}
-
-
-
 }

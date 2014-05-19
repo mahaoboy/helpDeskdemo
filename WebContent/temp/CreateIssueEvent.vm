@@ -1,0 +1,58 @@
+<html>
+  <head>
+    <title>JIRA Form Page</title>
+	<style type="text/css">
+		body{margin:50px;background-color: #EEEEEE;}
+		.field-group{margin: 10px;}
+		#warn, .warn{font-size:20px; font-weight:bold; color:red;}
+		#title{font-size:25px; font-weight:bold; }
+		</style>
+  </head>
+  <body>
+	<center>
+	<Span id="title">创建工单</span>
+    <form id="admin" class="aui" method="post" action="CreateIssueEvent">
+        
+        <div class="field-group">
+             <label for="content">姓名（Ad 用户名）:</label>
+             <span>$uname</span>
+        </div>
+        <div class="field-group">
+             <label for="content">部门（Department）:</label>
+             <input type="text" id="department" name="department" class="text" value="#if($department)$department#end">
+        </div>
+        <div class="field-group">
+             <label for="content">联系电话&邮件地址（Information）:</label>
+             <input type="text" id="information" name="information" class="text" value="#if($information)$information#end">
+        </div>
+        <div class="field-group">
+             <label for="content">事件主题（Title）:</label>
+             <input type="text" id="summary" name="summary" class="text" value="#if($summary)$summary#end">
+        </div>
+		<div class="field-group">
+             <label for="content">事件描述（Description）:</label>
+             <input type="text" id="description" name="description" class="text" value="#if($description)$description#end">
+        </div>
+		#if($itemlist)
+         <div class="field-group">
+             <label for="content">事件类型（Issue Type）:</label>
+			 <select name="issuetype">
+					#foreach ($content in $itemlist)
+                  <option value="$content" #if($issuetype&&$issuetype==$content) selected="selected" #end >$content</option>
+                  #end
+                  </select>
+          </div>
+       #end
+
+
+ 
+        <div class="field-group">
+             <input type="submit" value="创建工单" class="button">
+        </div>
+    </form>
+	<Span id="warn">#if($warn)$warn#end</span>
+    
+
+    </center>
+  </body>
+</html>
