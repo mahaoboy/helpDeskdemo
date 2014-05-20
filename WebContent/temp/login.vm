@@ -6,6 +6,5 @@
 µÇÂ½<input type="password" name="password" />
 <br />
 <input type="submit" value="µÇÂ½" />
-<h1>$uname</h1>
 </form>
 </html>

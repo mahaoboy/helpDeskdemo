@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -153,6 +154,24 @@ public class IssueInfo {
 	private String departmentName;
 	private String informationName;
 	private String aduserName;
+	private String resolutionDetail;
+	private String resolutionDetailName;
+	
+	public String getResolutionDetailName() {
+		return resolutionDetailName;
+	}
+
+	public void setResolutionDetailName(String resolutionDetailName) {
+		this.resolutionDetailName = resolutionDetailName;
+	}
+
+	public String getResolutionDetail() {
+		return resolutionDetail;
+	}
+
+	public void setResolutionDetail(String resolutionDetail) {
+		this.resolutionDetail = resolutionDetail;
+	}
 
 	private String createJson() {
 		JSONObject outJson = new JSONObject();
@@ -277,43 +296,7 @@ public class IssueInfo {
 
 		String url = jirasite + "rest/api/2/issue/" + issuekey;
 
-		URL obj = new URL(url);
-		// HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
-		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
-
-		// add reuqest header
-		con.setRequestMethod("GET");
-		con.setRequestProperty("User-Agent", USER_AGENT);
-
-		BASE64Encoder base64Encoder = new BASE64Encoder();
-		String authStr = usernameT + ":" + passwordT;
-		String authEnc = base64Encoder.encode(authStr.getBytes());
-		con.setRequestProperty("Authorization", "Basic " + authEnc);
-
-		int responseCode = con.getResponseCode();
-		System.out.println("\nSending 'GET' request to URL : " + url);
-		System.out.println("Response Code : " + responseCode);
-
-		StringBuffer response = new StringBuffer();
-		String inputLine;
-
-		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getInputStream()));
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-		} catch (Exception e) {
-
-			e.printStackTrace();
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getErrorStream()));
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
-			}
-			in.close();
-		}
+		StringBuffer response = getConnectionToJira(url);
 
 		// print result
 		System.out.println("Response String : " + response.toString());
@@ -347,10 +330,7 @@ public class IssueInfo {
 		return issueinfo;
 	}
 
-	private String sendPost() throws Exception {
-
-		String url = getSiteLink("rest/api/2/issue/");
-		System.out.println(url);
+	private HttpURLConnection getPostConnectionToJira(String url)  throws Exception {
 		URL obj = new URL(url);
 		// HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -367,7 +347,17 @@ public class IssueInfo {
 		String authStr = username + ":" + password;
 		String authEnc = base64Encoder.encode(authStr.getBytes());
 		con.setRequestProperty("Authorization", "Basic " + authEnc);
+		
+		return con;
+	}
+	
+	private String sendPost() throws Exception {
 
+		String url = getSiteLink("rest/api/2/issue/");
+		System.out.println(url);
+		
+		HttpURLConnection con = getPostConnectionToJira(url);
+		
 		String urlParameters = jsonStr;
 
 		// Send post request
@@ -551,11 +541,7 @@ public class IssueInfo {
 
 	}
 
-	@SuppressWarnings("null")
-	public Vector<Object> getIssueTypes() throws IOException {
-
-		String url = getSiteLink("rest/api/2/project/" + project);
-
+	private StringBuffer getConnectionToJira(String url) throws IOException {
 		URL obj = new URL(url);
 		// HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -572,7 +558,6 @@ public class IssueInfo {
 		int responseCode = con.getResponseCode();
 		System.out.println("\nSending 'GET' request to URL : " + url);
 		System.out.println("Response Code : " + responseCode);
-
 		StringBuffer response = new StringBuffer();
 		String inputLine;
 
@@ -593,8 +578,16 @@ public class IssueInfo {
 			}
 			in.close();
 		}
+		return response;
+	}
 
-		// print result
+	@SuppressWarnings("null")
+	public Vector<Object> getIssueTypes() throws IOException {
+
+		String url = getSiteLink("rest/api/2/project/" + project);
+
+		StringBuffer response = getConnectionToJira(url);
+
 		System.out.println("Response String : " + response.toString());
 		JSONObject jsonObject = JSONObject.fromObject(response.toString());
 
@@ -613,5 +606,157 @@ public class IssueInfo {
 		}
 
 		return issueTypeN;
+	}
+
+	public Vector<Object> getIssueStatus() throws IOException {
+
+		String url = getSiteLink("rest/api/2/project/" + project + "/statuses");
+
+		StringBuffer response = getConnectionToJira(url);
+
+		// print result
+		System.out.println("Response String : " + response.toString());
+
+		Vector<Object> statusN = new Vector<Object>();
+		Object[] statusJ = JSONArray.fromObject(response.toString()).toArray();
+		JSONObject statusJI;
+		for (int i = 0; i < statusJ.length; i++) {
+			Object[] statusJJ = JSONArray.fromObject(
+					JSONObject.fromObject(statusJ[i]).get("statuses"))
+					.toArray();
+			for (int j = 0; j < statusJJ.length; j++) {
+				statusJI = JSONObject.fromObject(statusJJ[j]);
+				String nameI = statusJI.get("name").toString();
+				if (!statusN.contains(nameI)) {
+					statusN.add(nameI);
+				}
+			}
+		}
+		return statusN;
+	}
+
+	public Vector<Object> getIssueResolution() throws IOException {
+
+		String url = getSiteLink("rest/api/2/resolution");
+
+		StringBuffer response = getConnectionToJira(url);
+
+		// print result
+		System.out.println("Response String : " + response.toString());
+
+		Vector<Object> resolutionN = new Vector<Object>();
+		Object[] resolutionJ = JSONArray.fromObject(response.toString()).toArray();
+		JSONObject resolutionJI;
+		for (int i = 0; i < resolutionJ.length; i++) {
+
+			resolutionJI = JSONObject.fromObject(resolutionJ[i]);
+			String nameI = resolutionJI.get("name").toString();
+			if (!resolutionN.contains(nameI)) {
+				resolutionN.add(nameI);
+			}
+		}
+		return resolutionN;
+	}
+	
+	private void getFieldName() throws IOException {
+		String url = getSiteLink("rest/api/2/field");
+
+		StringBuffer response = getConnectionToJira(url);
+		
+		System.out.println("Response String : " + response.toString());
+
+		String fieldNameN = "";
+		Object[] fieldNameJ = JSONArray.fromObject(response.toString()).toArray();
+		JSONObject fieldNameJI;
+		for (int i = 0; i < fieldNameJ.length; i++) {
+			fieldNameJI = JSONObject.fromObject(fieldNameJ[i]);
+			if(fieldNameJI.get("id").toString().equals(this.resolutionDetailName)){
+				this.resolutionDetail = fieldNameJI.get("name").toString();
+			}
+			else if(fieldNameJI.get("id").toString().equals(this.departmentName)){
+				this.department = fieldNameJI.get("name").toString();
+			}
+			else if(fieldNameJI.get("id").toString().equals(this.informationName)){
+				this.information = fieldNameJI.get("name").toString();
+			}
+			else if(fieldNameJI.get("id").toString().equals(this.aduserName)){
+				this.aduser = fieldNameJI.get("name").toString();
+			}
+		}
+	}
+	
+	private String createJqlJson() {
+		JSONObject outJson = new JSONObject();
+		JSONArray fieldsj = new JSONArray();
+		
+
+		String jql = "project = " + this.project;
+		outJson.put("jql", jql);
+		
+		
+
+		fieldsj.add("summary");
+		fieldsj.add("description");
+		fieldsj.add("status");
+		fieldsj.add("issuetype");
+		fieldsj.add("created");
+		fieldsj.add("resolution");
+		fieldsj.add(this.aduserName);
+		fieldsj.add(this.departmentName);
+		fieldsj.add(this.informationName);
+		fieldsj.add(this.resolutionDetailName);
+		outJson.put("fields", fieldsj);
+
+		return outJson.toString();
+	}
+	
+	public Vector<Object> searchIssue() throws Exception {
+
+		String url = jirasite + "rest/api/2/search";
+
+		HttpURLConnection con = getPostConnectionToJira(url);
+
+		getFieldName();
+		String urlParameters = createJqlJson();
+
+		// Send post request
+		con.setDoOutput(true);
+		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+		wr.writeBytes(urlParameters);
+		wr.flush();
+		wr.close();
+
+		int responseCode = con.getResponseCode();
+		System.out.println("\nSending 'POST' request to URL : " + url);
+		System.out.println("Post parameters : " + urlParameters);
+		System.out.println("Response Code : " + responseCode);
+
+		StringBuffer response = new StringBuffer();
+		String inputLine;
+
+		try {
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					con.getInputStream()));
+
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+		} catch (Exception e) {
+
+			e.printStackTrace();
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					con.getErrorStream()));
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+		}
+
+		// print result
+		System.out.println("Response String : " + response.toString());
+		Vector<Object> searchResult = new Vector<Object>();
+
+		return searchResult;
 	}
 }

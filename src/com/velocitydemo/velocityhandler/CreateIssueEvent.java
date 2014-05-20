@@ -78,8 +78,8 @@ public class CreateIssueEvent extends VelocityViewServlet {
 		String meth = request.getMethod();
 		String aduname = null;
 
-		if (IsLoggedIn.checkLogin(response, request)) {
-			aduname = IsLoggedIn.getUser(response, request);
+		if (IsLoggedIn.checkLogin(this, response, request)) {
+			aduname = IsLoggedIn.getUser(this, response, request);
 		} else {
 			try {
 				response.sendRedirect(loginPath);

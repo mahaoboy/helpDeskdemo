@@ -3,19 +3,22 @@
     <title>JIRA Form Page</title>
 	<style type="text/css">
 		body{margin:50px;background-color: #EEEEEE;}
-		.field-group{margin: 10px;}
+		.field-group{margin: 10px 80px 10px 10px; float: left; clear: left;}
+		input{width: 300px}
 		#warn, .warn{font-size:20px; font-weight:bold; color:red;}
 		#title{font-size:25px; font-weight:bold; }
 		</style>
   </head>
   <body>
+  #parse("HelpDesk.vm")
 	<center>
-	<Span id="title">创建工单</span>
+	
+	<Span id="title" style="float: left; margin-left: 170px">创建事件</span>
     <form id="admin" class="aui" method="post" action="CreateIssueEvent">
         
         <div class="field-group">
              <label for="content">姓名（Ad 用户名）:</label>
-             <span>$uname</span>
+             <span>#if($uname)$uname#end</span>
         </div>
         <div class="field-group">
              <label for="content">部门（Department）:</label>
@@ -47,7 +50,7 @@
 
  
         <div class="field-group">
-             <input type="submit" value="创建工单" class="button">
+             <input type="submit"  style="width:100px; float: left; margin-left: 150px" value="创建事件" class="button">
         </div>
     </form>
 	<Span id="warn">#if($warn)$warn#end</span>

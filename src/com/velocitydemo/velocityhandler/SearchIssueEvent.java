@@ -65,31 +65,82 @@ public class SearchIssueEvent extends VelocityViewServlet{
 			issueInfo.setAduserName(properties.get("姓名"));
 			issueInfo.setDepartmentName(properties.get("部门"));
 			issueInfo.setInformationName(properties.get("联系电话邮件地址"));
+			issueInfo.setResolutionDetailName(properties.get("解决方案"));
+			issueInfo.setJirasite(jirasiteUrl);
+			issueInfo.setProject(Project);
+			issueInfo.setUsername(Username);
+			issueInfo.setPassword(Password);
 		}
 	}
 
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
 		String meth = request.getMethod();
-		String aduname = "xx";
-		/*
-		 * if (IsLoggedIn.checkLogin(response, request)) { uname =
-		 * IsLoggedIn.getUser(response, request); } else { try {
-		 * response.sendRedirect(loginPath); } catch (IOException e) { // TODO
-		 * Auto-generated catch block e.printStackTrace(); } }
-		 */
-		ctx.put("uname", aduname);
+		String aduname = null;
+
+		if (IsLoggedIn.checkLogin(this, response, request)) {
+			aduname = IsLoggedIn.getUser(this, response, request);
+		} else {
+			try {
+				response.sendRedirect(loginPath);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		ctx.put("aduname", aduname);
 		ctx.put("meth", meth);
 		// System.out.println("Method:" + meth);
+		
 		if (meth == "POST") {
+			String uname = request.getParameter("uname").isEmpty() ? ""
+					: request.getParameter("uname");
+			String summary = request.getParameter("summary").isEmpty() ? ""
+					: request.getParameter("summary");
+			String description = request.getParameter("description").isEmpty() ? ""
+					: request.getParameter("description");
+			String issuetype = request.getParameter("issuetype").isEmpty() ? ""
+					: request.getParameter("issuetype");
+			String department = request.getParameter("department").isEmpty() ? ""
+					: request.getParameter("department");
+			String information = request.getParameter("information").isEmpty() ? ""
+					: request.getParameter("information");
 
-
+			String createtime = request.getParameter("createtime").isEmpty() ? ""
+					: request.getParameter("createtime");
+			String status = request.getParameter("status").isEmpty() ? ""
+					: request.getParameter("status");
+			String resolution = request.getParameter("resolution").isEmpty() ? ""
+					: request.getParameter("resolution");
+			String resolutiondescription = request.getParameter("resolutiondescription").isEmpty() ? ""
+					: request.getParameter("resolutiondescription");
+			try {
+				issueInfo.searchIssue();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
 		}
+		
+		Vector issuetypes = new Vector();
+		Vector statuses = new Vector();
+		Vector resolutions = new Vector();
+		try {
+			issuetypes = issueInfo.getIssueTypes();
+			ctx.put("issuetypes", issuetypes);
+			
+			statuses = issueInfo.getIssueStatus();
+			ctx.put("statuss", statuses);
+			
+			resolutions = issueInfo.getIssueResolution();
+			ctx.put("resolutions", resolutions);
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
 		ctx.put("Createdissuekey", request.getAttribute("Createdissuekey"));
 		// read file store
-		Vector itemlist = issueInfo.getItemList(velo.getProperty(
-				Velocity.FILE_RESOURCE_LOADER_PATH).toString());
-		ctx.put("itemlist", itemlist);
 
 		response.setContentType("text/html; charset=gb2312");
 		Template template = new Template();

@@ -41,8 +41,8 @@ public class HelpDesk extends VelocityViewServlet {
 		String meth = request.getMethod();
 		String uname = "";
 
-		if (IsLoggedIn.checkLogin(response, request)) {
-			uname = IsLoggedIn.getUser(response, request);
+		if (IsLoggedIn.checkLogin(this, response, request)) {
+			uname = IsLoggedIn.getUser(this, response, request);
 		} else {
 			try {
 				response.sendRedirect(loginPath);

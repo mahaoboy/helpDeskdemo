@@ -1,8 +1,7 @@
 <html>
 
-<h1 style="display: none;">$uname</h1>
-<span>欢迎您登录，$uname</span>
+<span>#if($uname)欢迎您登录，$uname#end</span>
 <h1><a href="CreateIssueEvent">创建事件</a>
 <br />
-<a href="">查询事件</a></h1>
+<a href="SearchIssueEvent">查询事件</a></h1>
 </html>

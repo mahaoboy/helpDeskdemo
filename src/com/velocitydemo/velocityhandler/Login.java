@@ -59,10 +59,8 @@ public class Login extends VelocityViewServlet {
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
 		String meth = request.getMethod();
-		String uname = "";
 
-		if (IsLoggedIn.checkLogin(response, request)) {
-			uname = IsLoggedIn.getUser(response, request);
+		if (IsLoggedIn.checkLogin(this, response, request)) {
 			try {
 				response.sendRedirect(HelpDeskPath);
 			} catch (IOException e) {
@@ -98,7 +96,6 @@ public class Login extends VelocityViewServlet {
 			ctx.put("meth", "");
 		}
 		
-		ctx.put("uname", uname);
 		response.setContentType("text/html; charset=gb2312");
 		Template template = new Template();
 		try {
