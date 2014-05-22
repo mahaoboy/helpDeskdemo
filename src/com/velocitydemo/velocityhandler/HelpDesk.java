@@ -57,7 +57,7 @@ public class HelpDesk extends VelocityViewServlet {
 		} else if (meth.equals("GET")) {
 		}
 
-		ctx.put("uname", uname);
+		ctx.put("aduname", uname);
 		response.setContentType("text/html; charset=gb2312");
 		Template template = new Template();
 		try {

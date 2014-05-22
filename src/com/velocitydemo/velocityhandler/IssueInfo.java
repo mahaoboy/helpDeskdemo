@@ -1,10 +1,6 @@
 package com.velocitydemo.velocityhandler;
 
-import net.sf.json.JSON;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import net.sf.json.util.JSONStringer;
-
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.DataOutputStream;
@@ -13,20 +9,17 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.net.ssl.HttpsURLConnection;
-
-import org.apache.tomcat.util.codec.binary.Base64;
-
+import net.sf.json.JSONArray;
+import net.sf.json.JSONObject;
 import sun.misc.BASE64Encoder;
 
 public class IssueInfo {
@@ -156,7 +149,16 @@ public class IssueInfo {
 	private String aduserName;
 	private String resolutionDetail;
 	private String resolutionDetailName;
-	
+	private String totalNumber;
+
+	public String getTotalNumber() {
+		return totalNumber;
+	}
+
+	public void setTotalNumber(String totalNumber) {
+		this.totalNumber = totalNumber;
+	}
+
 	public String getResolutionDetailName() {
 		return resolutionDetailName;
 	}
@@ -330,7 +332,8 @@ public class IssueInfo {
 		return issueinfo;
 	}
 
-	private HttpURLConnection getPostConnectionToJira(String url)  throws Exception {
+	private HttpURLConnection getPostConnectionToJira(String url)
+			throws Exception {
 		URL obj = new URL(url);
 		// HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 		HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -340,30 +343,33 @@ public class IssueInfo {
 		con.setRequestProperty("User-Agent", USER_AGENT);
 		// con.setRequestProperty("Accept-Language", "en-US,en;q=0.5");
 		con.setRequestProperty("Content-Type",
-				"application/json; charset=gb2312");
+				"application/json; charset=UTF-8");
 		// con.setRequestProperty("data", jsonStr);
 
 		BASE64Encoder base64Encoder = new BASE64Encoder();
 		String authStr = username + ":" + password;
 		String authEnc = base64Encoder.encode(authStr.getBytes());
 		con.setRequestProperty("Authorization", "Basic " + authEnc);
-		
+
 		return con;
 	}
-	
+
 	private String sendPost() throws Exception {
 
 		String url = getSiteLink("rest/api/2/issue/");
 		System.out.println(url);
-		
+
 		HttpURLConnection con = getPostConnectionToJira(url);
-		
+
 		String urlParameters = jsonStr;
 
 		// Send post request
 		con.setDoOutput(true);
 		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-		wr.writeBytes(urlParameters);
+		BufferedOutputStream bos = new BufferedOutputStream(wr);
+		bos.write(urlParameters.getBytes("UTF-8"));
+		bos.flush();
+		bos.close();
 		wr.flush();
 		wr.close();
 
@@ -377,7 +383,7 @@ public class IssueInfo {
 
 		try {
 			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getInputStream()));
+					con.getInputStream(), "UTF-8"));
 
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);
@@ -560,10 +566,9 @@ public class IssueInfo {
 		System.out.println("Response Code : " + responseCode);
 		StringBuffer response = new StringBuffer();
 		String inputLine;
-
 		try {
 			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getInputStream()));
+					con.getInputStream(), "UTF-8"));
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);
 			}
@@ -645,7 +650,8 @@ public class IssueInfo {
 		System.out.println("Response String : " + response.toString());
 
 		Vector<Object> resolutionN = new Vector<Object>();
-		Object[] resolutionJ = JSONArray.fromObject(response.toString()).toArray();
+		Object[] resolutionJ = JSONArray.fromObject(response.toString())
+				.toArray();
 		JSONObject resolutionJI;
 		for (int i = 0; i < resolutionJ.length; i++) {
 
@@ -657,43 +663,84 @@ public class IssueInfo {
 		}
 		return resolutionN;
 	}
-	
+
 	private void getFieldName() throws IOException {
 		String url = getSiteLink("rest/api/2/field");
 
 		StringBuffer response = getConnectionToJira(url);
-		
+
 		System.out.println("Response String : " + response.toString());
 
 		String fieldNameN = "";
-		Object[] fieldNameJ = JSONArray.fromObject(response.toString()).toArray();
+		Object[] fieldNameJ = JSONArray.fromObject(response.toString())
+				.toArray();
 		JSONObject fieldNameJI;
 		for (int i = 0; i < fieldNameJ.length; i++) {
 			fieldNameJI = JSONObject.fromObject(fieldNameJ[i]);
-			if(fieldNameJI.get("id").toString().equals(this.resolutionDetailName)){
+			if (fieldNameJI.get("id").toString()
+					.equals(this.resolutionDetailName)) {
 				this.resolutionDetail = fieldNameJI.get("name").toString();
-			}
-			else if(fieldNameJI.get("id").toString().equals(this.departmentName)){
+			} else if (fieldNameJI.get("id").toString()
+					.equals(this.departmentName)) {
 				this.department = fieldNameJI.get("name").toString();
-			}
-			else if(fieldNameJI.get("id").toString().equals(this.informationName)){
+			} else if (fieldNameJI.get("id").toString()
+					.equals(this.informationName)) {
 				this.information = fieldNameJI.get("name").toString();
-			}
-			else if(fieldNameJI.get("id").toString().equals(this.aduserName)){
+			} else if (fieldNameJI.get("id").toString().equals(this.aduserName)) {
 				this.aduser = fieldNameJI.get("name").toString();
 			}
 		}
 	}
-	
-	private String createJqlJson() {
+
+	private String createJqlJson(String uname, String summary,
+			String description, String issuetype, String department,
+			String information, String createtime, String status,
+			String resolution, String resolutiondescription) {
 		JSONObject outJson = new JSONObject();
 		JSONArray fieldsj = new JSONArray();
-		
 
+		// project=TUTORIAL and summary ~ 'aa' and status = closed and
+		// resolution = fixed and description ~ 'aa' and issuetype = Bug and
+		// '部门' ~ 'aa' and '姓名' ~ 'aa' and '联系电话&邮件地址' ~ 'aa' and '解决方案' ~ 'aa'
+		// and createdDate = 2013-04-22
 		String jql = "project = " + this.project;
+
+		if (!uname.isEmpty()) {
+			jql += " and '" + this.aduser + "'" + " ~ " + "'" + uname + "'";
+		}
+		if (!summary.isEmpty()) {
+			jql += " and summary ~ " + "'" + summary + "'";
+		}
+		if (!description.isEmpty()) {
+			jql += " and description ~ " + "'" + description + "'";
+		}
+		if (!issuetype.isEmpty()) {
+			jql += " and issuetype = " + issuetype;
+		}
+		if (!department.isEmpty()) {
+			jql += " and '" + this.department + "'" + " ~ " + "'" + department
+					+ "'";
+		}
+		if (!information.isEmpty()) {
+			jql += " and '" + this.information + "'" + " ~ " + "'"
+					+ information + "'";
+		}
+		if (!resolutiondescription.isEmpty()) {
+			jql += " and '" + this.resolutionDetail + "'" + " ~ " + "'"
+					+ resolutiondescription + "'";
+		}
+		if (!status.isEmpty()) {
+			jql += " and status = " + status;
+		}
+		if (!resolution.isEmpty()) {
+			jql += " and resolution = " + resolution;
+		}
+
+		if (!createtime.isEmpty()) {
+			jql += " and createdDate = " + createtime;
+		}
+
 		outJson.put("jql", jql);
-		
-		
 
 		fieldsj.add("summary");
 		fieldsj.add("description");
@@ -709,20 +756,28 @@ public class IssueInfo {
 
 		return outJson.toString();
 	}
-	
-	public Vector<Object> searchIssue() throws Exception {
+
+	public Vector<Object> searchIssue(String uname, String summary,
+			String description, String issuetype, String department,
+			String information, String createtime, String status,
+			String resolution, String resolutiondescription) throws Exception {
 
 		String url = jirasite + "rest/api/2/search";
 
 		HttpURLConnection con = getPostConnectionToJira(url);
 
 		getFieldName();
-		String urlParameters = createJqlJson();
+		String urlParameters = createJqlJson(uname, summary, description,
+				issuetype, department, information, createtime, status,
+				resolution, resolutiondescription);
 
 		// Send post request
 		con.setDoOutput(true);
 		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-		wr.writeBytes(urlParameters);
+		BufferedOutputStream bos = new BufferedOutputStream(wr);
+		bos.write(urlParameters.getBytes("UTF-8"));
+		bos.flush();
+		bos.close();
 		wr.flush();
 		wr.close();
 
@@ -735,9 +790,9 @@ public class IssueInfo {
 		String inputLine;
 
 		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getInputStream()));
 
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					con.getInputStream(), "UTF-8"));
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);
 			}
@@ -756,7 +811,57 @@ public class IssueInfo {
 		// print result
 		System.out.println("Response String : " + response.toString());
 		Vector<Object> searchResult = new Vector<Object>();
+		JSONObject resultViaJQLJ = JSONObject.fromObject(response.toString());
+		totalNumber = resultViaJQLJ.get("total").toString();
+		Object[] issuesJ = JSONArray.fromObject(resultViaJQLJ.get("issues"))
+				.toArray();
+		JSONObject issueJI;
+		for (int i = 0; i < issuesJ.length; i++) {
+			HashMap<String, String> issueInfolist = new HashMap<String, String>();
 
+			issueJI = JSONObject.fromObject(issuesJ[i]);
+			JSONObject fields = JSONObject.fromObject(issueJI.get("fields"));
+			if (!fields.isNullObject()) {
+				issueInfolist.put(
+						"summaryitem",
+						fields.get("summary").equals(null) ? "" : fields.get(
+								"summary").toString());
+				issueInfolist.put("descriptionitem", fields.get("description")
+						.equals(null) ? "" : fields.get("description")
+						.toString());
+				issueInfolist.put("statusitem",
+						fields.get("status").equals(null) ? "" : JSONObject
+								.fromObject(fields.get("status")).get("name")
+								.toString());
+				issueInfolist.put("issuetypeitem",
+						fields.get("issuetype").equals(null) ? "" : JSONObject
+								.fromObject(fields.get("issuetype"))
+								.get("name").toString());
+				issueInfolist.put(
+						"createditem",
+						fields.get("created").equals(null) ? "" : CommonUtil.formatDateFromString(fields.get(
+								"created").toString(), "yyyy-MM-dd'T'hh:mm:ss", "yyyy-MM-dd hh:mm:ss"));
+				issueInfolist.put(
+						"resolutionitem",
+						fields.get("resolution").equals(null) ? "" : JSONObject
+								.fromObject(fields.get("resolution"))
+								.get("name").toString());
+				issueInfolist.put("unameitem", fields.get(this.aduserName)
+						.equals(null) ? "" : fields.get(this.aduserName)
+						.toString());
+				issueInfolist.put("departmentitem",
+						fields.get(this.departmentName).equals(null) ? ""
+								: fields.get(this.departmentName).toString());
+				issueInfolist.put("informationitem",
+						fields.get(this.informationName).equals(null) ? ""
+								: fields.get(this.informationName).toString());
+				issueInfolist.put("resolutiondescriptionitem",
+
+				fields.get(this.resolutionDetailName).equals(null) ? ""
+						: fields.get(this.resolutionDetailName).toString());
+				searchResult.add(issueInfolist);
+			}
+		}
 		return searchResult;
 	}
 }

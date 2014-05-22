@@ -1,6 +1,7 @@
 package com.velocitydemo.velocityhandler;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Vector;
@@ -10,6 +11,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
@@ -26,6 +28,8 @@ public class CreateIssueEvent extends VelocityViewServlet {
 	private String Username;
 	private String Password;
 
+	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
+
 	private String PROPERTYNAME = "WEB-INF\\jira.conf";
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 
@@ -40,7 +44,7 @@ public class CreateIssueEvent extends VelocityViewServlet {
 		// this.getClass().getClassLoader().getResource("").getPath();
 		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
-		prop.setProperty(Velocity.OUTPUT_ENCODING, "GBK");
+		prop.setProperty(Velocity.OUTPUT_ENCODING, "UTF-8");
 
 		try {
 			velo.init(prop);// 初始化设置，下面用到getTemplate("*.vm")输出时;一定要调用velo对象去做,即velo.getTemplate("*.vm")
@@ -75,6 +79,12 @@ public class CreateIssueEvent extends VelocityViewServlet {
 
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
+		try {
+			request.setCharacterEncoding("UTF-8");
+		} catch (UnsupportedEncodingException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
 		String meth = request.getMethod();
 		String aduname = null;
 
@@ -102,6 +112,8 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					: request.getParameter("department");
 			String information = request.getParameter("information").isEmpty() ? ""
 					: request.getParameter("information");
+			String checkString = information + department + issuetype
+					+ description + summary;
 
 			// Map<String, Object> infoList = new HashMap<String, Object>();
 			if (jirasiteUrl.isEmpty() || Project.isEmpty() || summary.isEmpty()
@@ -110,6 +122,9 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					|| information.isEmpty() || department.isEmpty()) {
 				String warn = "创建失败，字段不能为空";
 				ctx.put("warn", warn);
+			} else if (!CommonUtil.checkStringValidation(checkString, checkPat)) {
+				ctx.put("warn",
+						"输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
 			} else {
 				String responseStr = "";
 				try {
@@ -129,6 +144,8 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					request.setAttribute("Createdissuekey", responseStr);
 					request.setAttribute("Createdissuelink",
 							issueInfo.getIssueLink());
+
+					request.setAttribute("", "GET");
 					RequestDispatcher rd = null;
 					rd = this.getServletContext().getRequestDispatcher(
 							searchPath);
@@ -143,10 +160,6 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					}
 				}
 			}
-			System.out.println(" +++++++ " + jirasiteUrl + " +++++++ "
-					+ Project + " +++++++ " + summary + " +++++++ "
-					+ description + " +++++++ " + issuetype + " +++++++ "
-					+ Username + " +++++++ " + Password);
 
 			ctx.put("summary", summary);
 			ctx.put("description", description);
@@ -164,7 +177,7 @@ public class CreateIssueEvent extends VelocityViewServlet {
 			e1.printStackTrace();
 		}
 
-		response.setContentType("text/html; charset=gb2312");
+		response.setContentType("text/html; charset=utf-8");
 		Template template = new Template();
 		try {
 			template = velo.getTemplate("CreateIssueEvent.vm");

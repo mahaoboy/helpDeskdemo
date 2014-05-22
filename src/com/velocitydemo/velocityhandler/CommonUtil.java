@@ -1,10 +1,17 @@
 package com.velocitydemo.velocityhandler;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.io.File;
 
 import org.apache.commons.lang.StringUtils;
@@ -43,4 +50,32 @@ public class CommonUtil {
 		
 		return properties;
 	}
+	
+	public static boolean checkStringValidation(String strForCheck, String[] checkPat){
+		Pattern pattern;
+		Matcher matcher;
+		boolean urlCheck =false;
+		
+		for(int i=0; i<checkPat.length; i++){
+			if(!checkPat[i].isEmpty()){
+				pattern= Pattern.compile(".*"+checkPat[i]+".*");
+				matcher = pattern.matcher(strForCheck);
+				
+				urlCheck = matcher.matches();
+				if (urlCheck) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	public static String formatDateFromString(String dateString, String inputFormat, String outputString) throws ParseException{
+		SimpleDateFormat sd = new SimpleDateFormat(inputFormat);
+		DateFormat  sd1 = new SimpleDateFormat(outputString);
+		Date d = sd.parse(dateString);
+		String outDate = sd1.format(d);
+		return outDate;
+	}
+	
 }

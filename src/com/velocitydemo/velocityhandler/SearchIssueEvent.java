@@ -1,6 +1,7 @@
 package com.velocitydemo.velocityhandler;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Vector;
@@ -10,13 +11,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.view.VelocityViewServlet;
 
-public class SearchIssueEvent extends VelocityViewServlet{
+public class SearchIssueEvent extends VelocityViewServlet {
 	private IssueInfo issueInfo = new IssueInfo();
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
@@ -25,6 +27,8 @@ public class SearchIssueEvent extends VelocityViewServlet{
 	private String Project;
 	private String Username;
 	private String Password;
+	
+	private String[] checkPat = {"=","\"","'", "\\\\", "/"};
 
 	private String PROPERTYNAME = "WEB-INF\\jira.conf";
 	private static HashMap<String, String> properties = new HashMap<String, String>();
@@ -57,8 +61,9 @@ public class SearchIssueEvent extends VelocityViewServlet{
 			e.printStackTrace();
 		}
 		if (!properties.isEmpty()) {
-			this.jirasiteUrl = properties.get("Protocol") + "://" +properties.get("URL") + ":"
-					+ properties.get("Port") + "/";
+			this.jirasiteUrl = properties.get("Protocol") + "://"
+					+ properties.get("URL") + ":" + properties.get("Port")
+					+ "/";
 			this.Project = properties.get("Project");
 			this.Username = properties.get("Username");
 			this.Password = properties.get("Password");
@@ -75,6 +80,14 @@ public class SearchIssueEvent extends VelocityViewServlet{
 
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
+		
+		try {
+			request.setCharacterEncoding("UTF-8");
+		} catch (UnsupportedEncodingException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
 		String meth = request.getMethod();
 		String aduname = null;
 
@@ -90,8 +103,9 @@ public class SearchIssueEvent extends VelocityViewServlet{
 		ctx.put("aduname", aduname);
 		ctx.put("meth", meth);
 		// System.out.println("Method:" + meth);
-		
-		if (meth == "POST") {
+
+		if (meth == "POST" && request.getAttribute("Createdissuekey") == null) {
+			String checkString = "";
 			String uname = request.getParameter("uname").isEmpty() ? ""
 					: request.getParameter("uname");
 			String summary = request.getParameter("summary").isEmpty() ? ""
@@ -111,38 +125,63 @@ public class SearchIssueEvent extends VelocityViewServlet{
 					: request.getParameter("status");
 			String resolution = request.getParameter("resolution").isEmpty() ? ""
 					: request.getParameter("resolution");
-			String resolutiondescription = request.getParameter("resolutiondescription").isEmpty() ? ""
-					: request.getParameter("resolutiondescription");
-			try {
-				issueInfo.searchIssue();
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			String resolutiondescription = request.getParameter(
+					"resolutiondescription").isEmpty() ? "" : request
+					.getParameter("resolutiondescription");
+
+			checkString += uname + resolutiondescription + resolution + status
+					+ createtime + information + department + issuetype
+					+ description + summary;
+
+			if(CommonUtil.checkStringValidation(checkString, checkPat)){
+				try {
+					Vector<Object> searchResultViaJQL = issueInfo.searchIssue(uname, summary, description, issuetype,
+							department, information, createtime, status,
+							resolution, resolutiondescription);
+					ctx.put("searchResultViaJQL", searchResultViaJQL);
+					ctx.put("total", issueInfo.getTotalNumber());
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}else{
+				ctx.put("warn", "输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
 			}
 			
+			
+			ctx.put("uname", uname);
+			ctx.put("summary", summary);
+			ctx.put("description", description);
+			ctx.put("issuetype", issuetype);
+			ctx.put("department", department);
+			ctx.put("information", information);
+			ctx.put("createtime", createtime);
+			ctx.put("status", status);
+			ctx.put("resolution", resolution);
+			ctx.put("resolutiondescription", resolutiondescription);
 		}
-		
+
 		Vector issuetypes = new Vector();
 		Vector statuses = new Vector();
 		Vector resolutions = new Vector();
 		try {
 			issuetypes = issueInfo.getIssueTypes();
 			ctx.put("issuetypes", issuetypes);
-			
+
 			statuses = issueInfo.getIssueStatus();
 			ctx.put("statuss", statuses);
-			
+
 			resolutions = issueInfo.getIssueResolution();
 			ctx.put("resolutions", resolutions);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		
+
 		ctx.put("Createdissuekey", request.getAttribute("Createdissuekey"));
 		// read file store
 
-		response.setContentType("text/html; charset=gb2312");
+		response.setContentType("text/html; charset=utf-8");
 		Template template = new Template();
 		try {
 			template = velo.getTemplate("SearchIssueEvent.vm");

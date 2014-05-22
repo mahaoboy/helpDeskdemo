@@ -15,6 +15,7 @@
 	
 	
     <Span id="warn">#if($Createdissuekey)新事件创建完成：$Createdissuekey#end</span>
+    <Span id="warn">#if($warn)$warn#end</span>
     <div id="bodycontent" >
     <Span id="title" style="float: left; margin-left: 200px">搜索事件</span>
     <form id="admin" class="aui" method="post" action="SearchIssueEvent">
@@ -43,6 +44,7 @@
          <div class="field-group">
              <label for="content">事件类型（Issue Type）:</label>
 			 <select name="issuetype">
+			 <option value="" #if(!$issuetype) selected="selected" #end ></option>
 					#foreach ($content in $issuetypes)
                   <option value="$content" #if($issuetype&&$issuetype==$content) selected="selected" #end >$content</option>
                   #end
@@ -51,7 +53,7 @@
        #end
        
        <div class="field-group">
-             <label for="content">事件提交时间（create time）:</label>
+             <label for="content">事件提交时间（create time）(yyyy-mm-dd):</label>
              <input type="text" id="createtime" name="createtime" class="text" value="#if($createtime)$createtime#end">
         </div>
  
@@ -59,6 +61,7 @@
          <div class="field-group">
              <label for="content">处理状态（Status）:</label>
 			 <select name="status">
+			 <option value="" #if(!$status) selected="selected" #end ></option>
 					#foreach ($content in $statuss)
                   <option value="$content" #if($status&&$status==$content) selected="selected" #end >$content</option>
                   #end
@@ -70,6 +73,7 @@
          <div class="field-group">
              <label for="content">处理方式（Way of Resolution）:</label>
 			 <select name="resolution">
+			  <option value="" #if(!$resolution) selected="selected" #end ></option>
 					#foreach ($content in $resolutions)
                   <option value="$content" #if($resolution&&$resolution==$content) selected="selected" #end >$content</option>
                   #end
@@ -88,8 +92,10 @@
         </div>
     </form>
 
-    #if($itemlist)
+    #if($searchResultViaJQL)
+    <div style="float: left;">
 		<Span id="title">事件搜索结果: 一共$total个结果</span>
+		
     <table width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
             <tr><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">姓名</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">部门</td>
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">联系电话&邮件地址</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件类型</td>
@@ -97,17 +103,22 @@
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理状态</td> <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理方式</td>
              <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">解决方案</td>
             </tr>
-            #foreach ($content in $itemlist)
+            #foreach ($content in $searchResultViaJQL)
             <tr>
-						<td bgcolor="#6666FF" align="center">$content.get("project")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("summary")</td>
-						<td bgcolor="#6666FF" align="center">#if($content.get("issuetype")!="saab") 转开发 #else 普通工单 #end</td>
-						<td bgcolor="#6666FF" align="center">$content.get("description")</td>
-						
+						<td bgcolor="#6666FF" align="center">$content.get("unameitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("departmentitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("informationitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("issuetypeitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("descriptionitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("createditem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("statusitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("resolutionitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("resolutiondescriptionitem")</td>
 			</tr>
 			#end
     </table>
     #end
+    </div>
     </div>
     </center>
   </body>
