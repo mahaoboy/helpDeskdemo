@@ -36,7 +36,7 @@
 		<welcome-file>/Login</welcome-file>
 	</welcome-file-list>
 
-   <servlet>
+	<servlet>
 		<servlet-name>HelpDesk</servlet-name>
 		<servlet-class>com.velocitydemo.velocityhandler.HelpDesk</servlet-class>
 	</servlet>
@@ -48,7 +48,7 @@
 		<welcome-file>/HelpDesk</welcome-file>
 	</welcome-file-list>
 
-  <servlet>
+	<servlet>
 		<servlet-name>CreateIssueEvent</servlet-name>
 		<servlet-class>com.velocitydemo.velocityhandler.CreateIssueEvent</servlet-class>
 	</servlet>
@@ -59,7 +59,7 @@
 	<welcome-file-list>
 		<welcome-file>/CreateIssueEvent</welcome-file>
 	</welcome-file-list>
-	
+
 	<servlet>
 		<servlet-name>SearchIssueEvent</servlet-name>
 		<servlet-class>com.velocitydemo.velocityhandler.SearchIssueEvent</servlet-class>
@@ -71,6 +71,33 @@
 	<welcome-file-list>
 		<welcome-file>/SearchIssueEvent</welcome-file>
 	</welcome-file-list>
+
+
+	<servlet>
+		<servlet-name>GoJIRA</servlet-name>
+		<servlet-class>com.velocitydemo.velocityhandler.GoJIRA</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>GoJIRA</servlet-name>
+		<url-pattern>/GoJIRA</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>/GoJIRA</welcome-file>
+	</welcome-file-list>
+
+	<servlet>
+		<servlet-name>GetTransitionList</servlet-name>
+		<servlet-class>com.velocitydemo.velocityhandler.GetTransitionList</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>GetTransitionList</servlet-name>
+		<url-pattern>/GetTransitionList</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>/GetTransitionList</welcome-file>
+	</welcome-file-list>
+
+
 
 	<servlet>
 		<servlet-name>Confluence</servlet-name>

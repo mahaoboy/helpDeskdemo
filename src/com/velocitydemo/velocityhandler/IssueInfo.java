@@ -151,6 +151,44 @@ public class IssueInfo {
 	private String resolutionDetailName;
 	private String totalNumber;
 
+	private String closeAction;
+	private HashMap<String, String> closeActionDetail = new HashMap<String, String>();
+
+	public String getCloseAction() {
+		return closeAction;
+	}
+
+	public void setCloseAction(String closeAction) {
+		this.closeAction = closeAction;
+	}
+
+	public HashMap<String, String> getCloseActionDetail() {
+		return closeActionDetail;
+	}
+
+	public void setCloseActionDetail(HashMap<String, String> closeActionDetail) {
+		this.closeActionDetail = closeActionDetail;
+	}
+
+	public String getReopenAction() {
+		return reopenAction;
+	}
+
+	public void setReopenAction(String reopenAction) {
+		this.reopenAction = reopenAction;
+	}
+
+	public HashMap<String, String> getReopenActionDetail() {
+		return reopenActionDetail;
+	}
+
+	public void setReopenActionDetail(HashMap<String, String> reopenActionDetail) {
+		this.reopenActionDetail = reopenActionDetail;
+	}
+
+	private String reopenAction;
+	private HashMap<String, String> reopenActionDetail = new HashMap<String, String>();
+
 	public String getTotalNumber() {
 		return totalNumber;
 	}
@@ -393,7 +431,7 @@ public class IssueInfo {
 
 			e.printStackTrace();
 			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getErrorStream()));
+					con.getErrorStream(), "UTF-8"));
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);
 			}
@@ -558,6 +596,7 @@ public class IssueInfo {
 
 		BASE64Encoder base64Encoder = new BASE64Encoder();
 		String authStr = username + ":" + password;
+
 		String authEnc = base64Encoder.encode(authStr.getBytes());
 		con.setRequestProperty("Authorization", "Basic " + authEnc);
 
@@ -567,17 +606,26 @@ public class IssueInfo {
 		StringBuffer response = new StringBuffer();
 		String inputLine;
 		try {
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getInputStream(), "UTF-8"));
-			while ((inputLine = in.readLine()) != null) {
-				response.append(inputLine);
+			if (responseCode < 400) {
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						con.getInputStream(), "UTF-8"));
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
+			} else {
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						con.getErrorStream(), "UTF-8"));
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
 			}
-			in.close();
 		} catch (Exception e) {
 
 			e.printStackTrace();
 			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getErrorStream()));
+					con.getErrorStream(), "UTF-8"));
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);
 			}
@@ -694,8 +742,8 @@ public class IssueInfo {
 
 	private String createJqlJson(String uname, String summary,
 			String description, String issuetype, String department,
-			String information, String createtime, String status,
-			String resolution, String resolutiondescription) {
+			String information, String createtime, String createtimeend,
+			String status, String resolution, String resolutiondescription) {
 		JSONObject outJson = new JSONObject();
 		JSONArray fieldsj = new JSONArray();
 
@@ -737,7 +785,11 @@ public class IssueInfo {
 		}
 
 		if (!createtime.isEmpty()) {
-			jql += " and createdDate = " + createtime;
+			jql += " and createdDate >= " + createtime;
+		}
+
+		if (!createtimeend.isEmpty()) {
+			jql += " and createdDate <= " + createtimeend;
 		}
 
 		outJson.put("jql", jql);
@@ -759,8 +811,9 @@ public class IssueInfo {
 
 	public Vector<Object> searchIssue(String uname, String summary,
 			String description, String issuetype, String department,
-			String information, String createtime, String status,
-			String resolution, String resolutiondescription) throws Exception {
+			String information, String createtime, String createtimeend,
+			String status, String resolution, String resolutiondescription)
+			throws Exception {
 
 		String url = jirasite + "rest/api/2/search";
 
@@ -768,8 +821,8 @@ public class IssueInfo {
 
 		getFieldName();
 		String urlParameters = createJqlJson(uname, summary, description,
-				issuetype, department, information, createtime, status,
-				resolution, resolutiondescription);
+				issuetype, department, information, createtime, createtimeend,
+				status, resolution, resolutiondescription);
 
 		// Send post request
 		con.setDoOutput(true);
@@ -801,7 +854,7 @@ public class IssueInfo {
 
 			e.printStackTrace();
 			BufferedReader in = new BufferedReader(new InputStreamReader(
-					con.getErrorStream()));
+					con.getErrorStream(), "UTF-8"));
 			while ((inputLine = in.readLine()) != null) {
 				response.append(inputLine);
 			}
@@ -820,6 +873,10 @@ public class IssueInfo {
 			HashMap<String, String> issueInfolist = new HashMap<String, String>();
 
 			issueJI = JSONObject.fromObject(issuesJ[i]);
+
+			String issueKey = issueJI.get("key").toString();
+			//getTransitionList(issueKey);
+
 			JSONObject fields = JSONObject.fromObject(issueJI.get("fields"));
 			if (!fields.isNullObject()) {
 				issueInfolist.put(
@@ -839,8 +896,10 @@ public class IssueInfo {
 								.get("name").toString());
 				issueInfolist.put(
 						"createditem",
-						fields.get("created").equals(null) ? "" : CommonUtil.formatDateFromString(fields.get(
-								"created").toString(), "yyyy-MM-dd'T'hh:mm:ss", "yyyy-MM-dd hh:mm:ss"));
+						fields.get("created").equals(null) ? "" : CommonUtil
+								.formatDateFromString(fields.get("created")
+										.toString(), "yyyy-MM-dd'T'hh:mm:ss",
+										"yyyy-MM-dd hh:mm:ss"));
 				issueInfolist.put(
 						"resolutionitem",
 						fields.get("resolution").equals(null) ? "" : JSONObject
@@ -856,12 +915,90 @@ public class IssueInfo {
 						fields.get(this.informationName).equals(null) ? ""
 								: fields.get(this.informationName).toString());
 				issueInfolist.put("resolutiondescriptionitem",
-
-				fields.get(this.resolutionDetailName).equals(null) ? ""
-						: fields.get(this.resolutionDetailName).toString());
+						fields.get(this.resolutionDetailName).equals(null) ? ""
+								: fields.get(this.resolutionDetailName)
+										.toString());
+				/*if (!this.closeActionDetail.equals(null)) {
+					issueInfolist.put("canClosedOrNot", "yes");
+					issueInfolist.put("closeActionName",
+							this.closeActionDetail.get("name"));
+					issueInfolist.put("closeActionId",
+							this.closeActionDetail.get("id"));
+				}
+				if (!this.reopenActionDetail.equals(null)) {
+					issueInfolist.put("canReOpenOrNot", "yes");
+					issueInfolist.put("reopenActionName",
+							this.reopenActionDetail.get("name"));
+					issueInfolist.put("reopenActionId",
+							this.reopenActionDetail.get("id"));
+				}*/
+				issueInfolist.put("issuekey", issueKey);
 				searchResult.add(issueInfolist);
 			}
 		}
 		return searchResult;
+	}
+
+	public void getTransitionList(String issueKey) throws IOException {
+		String url = getSiteLink("rest/api/2/issue/" + issueKey
+				+ "/transitions");
+
+		StringBuffer response = getConnectionToJira(url);
+
+		System.out.println("Response String : " + response.toString());
+
+		Object[] transitionJ = JSONArray.fromObject(
+				JSONObject.fromObject(response.toString()).get("transitions"))
+				.toArray();
+		JSONObject transitionJI;
+		for (int i = 0; i < transitionJ.length; i++) {
+			transitionJI = JSONObject.fromObject(transitionJ[i]);
+			if (transitionJI.get("name").toString().equals(this.closeAction)) {
+				this.closeActionDetail.put("id", transitionJI.get("id")
+						.toString());
+				this.closeActionDetail.put("name", this.closeAction);
+				
+			} else if (transitionJI.get("name").toString()
+					.equals(this.reopenAction)) {
+				this.reopenActionDetail.put("id", transitionJI.get("id")
+						.toString());
+				this.reopenActionDetail.put("name", this.reopenAction);
+			}
+		}
+	}
+
+	public boolean checkUserExistedOrNot(String username, String inpassword) {
+		this.setUsername(username);
+		this.setPassword(inpassword);
+		System.out.println(username);
+		String url = getSiteLink("rest/api/2/user?username=" + username);
+		System.out.println(url);
+		StringBuffer response = null;
+		String errorJ = "";
+		try {
+			response = getConnectionToJira(url);
+			if (response.toString().startsWith("{")) {
+				errorJ = JSONObject.fromObject(
+						JSONObject.fromObject(response.toString())
+								.get("errorMessages"))
+						.isNullObject() ? "" : JSONObject
+						.fromObject(response.toString()).get("errorMessages")
+						.toString();
+				if (errorJ.equals("")) {
+					return true;
+				}
+			} else {
+				return false;
+			}
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
+
+		System.out.println("Response String : " + response.toString());
+
+		return false;
 	}
 }

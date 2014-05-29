@@ -27,6 +27,8 @@ public class CreateIssueEvent extends VelocityViewServlet {
 	private String Project;
 	private String Username;
 	private String Password;
+	private static String userName = "userName";
+	private static String userPassword = "userPassword";
 
 	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
 
@@ -65,15 +67,13 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					+ properties.get("URL") + ":" + properties.get("Port")
 					+ "/";
 			this.Project = properties.get("Project");
-			this.Username = properties.get("Username");
-			this.Password = properties.get("Password");
+			//this.Username = properties.get("Username");
+			//this.Password = properties.get("Password");
 			issueInfo.setAduserName(properties.get("姓名"));
 			issueInfo.setDepartmentName(properties.get("部门"));
 			issueInfo.setInformationName(properties.get("联系电话邮件地址"));
 			issueInfo.setJirasite(jirasiteUrl);
 			issueInfo.setProject(Project);
-			issueInfo.setUsername(Username);
-			issueInfo.setPassword(Password);
 		}
 	}
 
@@ -87,12 +87,27 @@ public class CreateIssueEvent extends VelocityViewServlet {
 		}
 		String meth = request.getMethod();
 		String aduname = null;
-
+		String adpassword = null;
+		
 		if (IsLoggedIn.checkLogin(this, response, request)) {
-			aduname = IsLoggedIn.getUser(this, response, request);
+			aduname = IsLoggedIn.getUserInfo(this, response, request, userName);
+			adpassword = IsLoggedIn.getUserInfo(this, response, request, userPassword);
+			ctx.put("aduname", aduname);
+			
+
+			issueInfo.setUsername(aduname);
+			issueInfo.setPassword(adpassword);
 		} else {
 			try {
 				response.sendRedirect(loginPath);
+				Template nulltemplate = new Template();
+				try {
+					nulltemplate = velo.getTemplate("CreateIssueEvent.vm");
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return nulltemplate;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -118,7 +133,6 @@ public class CreateIssueEvent extends VelocityViewServlet {
 			// Map<String, Object> infoList = new HashMap<String, Object>();
 			if (jirasiteUrl.isEmpty() || Project.isEmpty() || summary.isEmpty()
 					|| description.isEmpty() || issuetype.isEmpty()
-					|| Username.isEmpty() || Password.isEmpty()
 					|| information.isEmpty() || department.isEmpty()) {
 				String warn = "创建失败，字段不能为空";
 				ctx.put("warn", warn);
@@ -129,8 +143,8 @@ public class CreateIssueEvent extends VelocityViewServlet {
 				String responseStr = "";
 				try {
 					responseStr = issueInfo.createIssue(jirasiteUrl, Project,
-							summary, description, issuetype, Username,
-							Password, information, department, aduname);
+							summary, description, issuetype, aduname,
+							adpassword, information, department, aduname);
 
 				} catch (Exception e) {
 					// TODO Auto-generated catch block

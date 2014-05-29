@@ -14,12 +14,22 @@ import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.view.VelocityViewServlet;
 
-public class HelpDesk extends VelocityViewServlet {
+public class GoJIRA extends VelocityViewServlet {
+	private String jirasiteUrl;
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
 	private String path;
+	private String jiraPath = "login.jsp";
+	private String os_username = "os_username";
+	private String os_password = "os_password";
+	private String os_destination = "os_destination";
+	private String destinationPath = "/";
 	private String loginPath = "Login";
+	private HashMap<String, String> properties = new HashMap<String, String>();
+
 	private static String userName = "userName";
+	private static String userPassword = "userPassword";
+	private String PROPERTYNAME = "WEB-INF\\jira.conf";
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity“˝«Ê∂‘œÛ
@@ -35,44 +45,63 @@ public class HelpDesk extends VelocityViewServlet {
 			e1.printStackTrace();
 		}
 
+		try {
+			if (properties.isEmpty()) {
+				properties = CommonUtil.readFile(path + PROPERTYNAME);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (!properties.isEmpty()) {
+			jirasiteUrl = properties.get("Protocol") + "://"
+					+ properties.get("URL") + ":" + properties.get("Port")
+					+ "/";
+		}
+
 	}
 
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
 		String meth = request.getMethod();
 		String uname = "";
+		String upassword = "";
+		Template nulltemplate = new Template();
+		try {
+			nulltemplate = velo.getTemplate("HelpDesk.vm");
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			uname = IsLoggedIn.getUserInfo(this, response, request, userName);
+			upassword = IsLoggedIn.getUserInfo(this, response, request,
+					userPassword);
+			try {
+				if (!jirasiteUrl.isEmpty()) {
+					response.sendRedirect(jirasiteUrl + jiraPath + "?"
+							+ os_username + "=" + uname + "&" + os_password
+							+ "=" + upassword + "&" + os_destination + "="
+							+ destinationPath);
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		} else {
 			try {
 				response.sendRedirect(loginPath);
-				Template nulltemplate = new Template();
 				try {
 					nulltemplate = velo.getTemplate("HelpDesk.vm");
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				return nulltemplate;
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
+		return nulltemplate;
 
-		if (meth.equals("POST")) {
-
-		} else if (meth.equals("GET")) {
-		}
-
-		ctx.put("aduname", uname);
-		response.setContentType("text/html; charset=gb2312");
-		Template template = new Template();
-		try {
-			template = velo.getTemplate("HelpDesk.vm");
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		return template;
 	}
 }

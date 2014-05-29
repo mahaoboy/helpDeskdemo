@@ -8,6 +8,12 @@
 		#warn, .warn{font-size:20px; font-weight:bold; color:red;}
 		#title{font-size:25px; font-weight:bold; }
 		</style>
+	<script type="text/javascript">
+		
+		#include("js\\jquery-1.10.2.min.js")
+		
+		#include("js\\loadTransition.js")
+		</script>
   </head>
   <body>
   #parse("HelpDesk.vm")
@@ -17,32 +23,30 @@
     <Span id="warn">#if($Createdissuekey)新事件创建完成：$Createdissuekey#end</span>
     <Span id="warn">#if($warn)$warn#end</span>
     <div id="bodycontent" >
+     <div style="float: left; ">
     <Span id="title" style="float: left; margin-left: 200px">搜索事件</span>
     <form id="admin" class="aui" method="post" action="SearchIssueEvent">
         
+
         <div class="field-group">
-             <label for="content">姓名（Ad 用户名）:</label>
-              <input type="text" id="uname" name="uname" class="text" value="#if($uname)$uname#end">
-        </div>
-        <div class="field-group">
-             <label for="content">部门（Department）:</label>
+             <label for="content">部门:</label>
              <input type="text" id="department" name="department" class="text" value="#if($department)$department#end">
         </div>
         <div class="field-group">
-             <label for="content">联系电话&邮件地址（Information）:</label>
+             <label for="content">联系电话&邮件地址:</label>
              <input type="text" id="information" name="information" class="text" value="#if($information)$information#end">
         </div>
         <div class="field-group">
-             <label for="content">事件主题（Title）:</label>
+             <label for="content">事件主题:</label>
              <input type="text" id="summary" name="summary" class="text" value="#if($summary)$summary#end">
         </div>
 		<div class="field-group">
-             <label for="content">事件描述（Description）:</label>
+             <label for="content">事件描述:</label>
              <input type="text" id="description" name="description" class="text" value="#if($description)$description#end">
         </div>
 		#if($issuetypes)
          <div class="field-group">
-             <label for="content">事件类型（Issue Type）:</label>
+             <label for="content">事件类型:</label>
 			 <select name="issuetype">
 			 <option value="" #if(!$issuetype) selected="selected" #end ></option>
 					#foreach ($content in $issuetypes)
@@ -53,13 +57,14 @@
        #end
        
        <div class="field-group">
-             <label for="content">事件提交时间（create time）(yyyy-mm-dd):</label>
-             <input type="text" id="createtime" name="createtime" class="text" value="#if($createtime)$createtime#end">
+             <label for="content">事件提交时间范围(yyyy-mm-dd):</label>
+             <br />搜索起始时间：<input type="text" id="createtime" name="createtime" class="text" value="#if($createtime)$createtime#end">
+            <br /> 搜索结束时间：<input type="text" id="createtimeend" name="createtimeend" class="text" value="#if($createtimeend)$createtimeend#end">
         </div>
  
  		#if($statuss)
          <div class="field-group">
-             <label for="content">处理状态（Status）:</label>
+             <label for="content">处理状态:</label>
 			 <select name="status">
 			 <option value="" #if(!$status) selected="selected" #end ></option>
 					#foreach ($content in $statuss)
@@ -71,7 +76,7 @@
        
        #if($resolutions)
          <div class="field-group">
-             <label for="content">处理方式（Way of Resolution）:</label>
+             <label for="content">处理方式:</label>
 			 <select name="resolution">
 			  <option value="" #if(!$resolution) selected="selected" #end ></option>
 					#foreach ($content in $resolutions)
@@ -82,7 +87,7 @@
        #end
  
        <div class="field-group">
-             <label for="content">解决方案（Resolution Description）:</label>
+             <label for="content">解决方案:</label>
              <input type="text" id="resolutiondescription" name="resolutiondescription" class="text" value="#if($resolutiondescription)$resolutiondescription#end">
         </div>
  
@@ -91,9 +96,9 @@
              <input type="submit" style="width:100px; margin-left:200px;" value="提交搜索" class="button">
         </div>
     </form>
-
+</div>
     #if($searchResultViaJQL)
-    <div style="float: left;">
+    <div style="float: left; clear: both; width: 100%;">
 		<Span id="title">事件搜索结果: 一共$total个结果</span>
 		
     <table width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
@@ -102,6 +107,7 @@
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件描述</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件提交时间</td>
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理状态</td> <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理方式</td>
              <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">解决方案</td>
+              <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">操作</td>
             </tr>
             #foreach ($content in $searchResultViaJQL)
             <tr>
@@ -114,6 +120,7 @@
 						<td bgcolor="#6666FF" align="center">$content.get("statusitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("resolutionitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("resolutiondescriptionitem")</td>
+						<td bgcolor="#6666FF" align="center"><div class="transition_functions" id='$content.get("issuekey")'><a href="" style="display:none;" class="closeInfoList">关闭</a> <a href="" style="display:none;"  class="reopenInfoList">| 重开</a></div></td>
 			</tr>
 			#end
     </table>

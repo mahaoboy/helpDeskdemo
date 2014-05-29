@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -13,10 +14,29 @@ import org.apache.velocity.tools.view.VelocityViewServlet;
 public class IsLoggedIn {
 	private static String IsLoggedInString = "IsLoggedIn";
 	private static String userName = "userName";
+	private static String userPassword = "userPassword";
 	private static String SESSION_COOKIE_NAME = "SESSION_COOKIE";
 	private static String PROPERTYNAME = "WEB-INF\\ldap.conf";
+	private static String JIRA_PROPERTYNAME = "WEB-INF\\jira.conf";
 	private static HashMap<String, String> properties = new HashMap<String, String>();
-	private static VelocityViewServlet scontext;
+	private static HttpServlet scontext;
+	private static String adminUserName;
+	private static String adminPassWord;
+	
+	private static boolean getAdminInfo() {
+		String path = scontext.getServletContext().getRealPath("/");
+		try {
+
+			properties = CommonUtil.readFile(path + JIRA_PROPERTYNAME);
+			adminUserName = properties.get("Username");
+			adminPassWord = properties.get("Password");
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return true;
+	}
 
 	private static boolean isLDAPenabled() {
 		String path = scontext.getServletContext().getRealPath("/");
@@ -34,7 +54,7 @@ public class IsLoggedIn {
 		return true;
 	}
 
-	public static boolean checkLogin(VelocityViewServlet servletContext,
+	public static boolean checkLogin(HttpServlet servletContext,
 			HttpServletResponse response, HttpServletRequest request) {
 		/*
 		 * PrintWriter out; try { out = response.getWriter();
@@ -43,8 +63,9 @@ public class IsLoggedIn {
 		 */
 
 		scontext = servletContext;
-		String result = String.valueOf(isLDAPenabled());
 		if (!isLDAPenabled()) {
+			getAdminInfo();
+			setLogin(response, request, adminUserName, adminPassWord);
 			return true;
 		}
 		Cookie cookies[] = request.getCookies();
@@ -67,16 +88,13 @@ public class IsLoggedIn {
 				}
 			}
 		}
-		/*
-		 * } catch (IOException e1) { // TODO Auto-generated catch block
-		 * e1.printStackTrace(); }
-		 */
+
 		return loginOrNot;
 
 	}
 
 	public static void setLogin(HttpServletResponse response,
-			HttpServletRequest request, String userid) {
+			HttpServletRequest request, String userid , String inpassword) {
 		HttpSession session = request.getSession();
 		HttpSessionCollector.sessionadded(session);
 
@@ -84,6 +102,7 @@ public class IsLoggedIn {
 		if (!userid.isEmpty()) {
 			session.setAttribute(IsLoggedInString, true);
 			session.setAttribute(userName, userid);
+			session.setAttribute(userPassword, inpassword);
 		}
 
 		Cookie cookies[] = request.getCookies();
@@ -112,13 +131,13 @@ public class IsLoggedIn {
 		response.addCookie(c);
 	}
 
-	public static String getUser(VelocityViewServlet servletContext,
-			HttpServletResponse response, HttpServletRequest request) {
+	public static String getUserInfo(HttpServlet servletContext,
+			HttpServletResponse response, HttpServletRequest request, String userinfo) {
 		if (!IsLoggedIn.checkLogin(servletContext, response, request)) {
 			return "";
 		} else {
 			Cookie cookies[] = request.getCookies();
-			String user = "";
+			String uinfo = "";
 			Cookie c1 = null;
 			if (cookies != null) {
 				for (int i = 0; i < cookies.length; i++) {
@@ -126,14 +145,15 @@ public class IsLoggedIn {
 					if (SESSION_COOKIE_NAME.equals(c1.getName())) {
 						HttpSession session = HttpSessionCollector.find(c1
 								.getValue());
-						if (session != null) {
-							user = (String) session.getAttribute(userName);
+						if (session != null && userinfo.equals(userName)) {
+							uinfo = (String) session.getAttribute(userName);
+						}else if (session != null && userinfo.equals(userPassword)){
+							uinfo = (String) session.getAttribute(userPassword);
 						}
-
 					}
 				}
 			}
-			return user;
+			return uinfo;
 		}
 
 	}

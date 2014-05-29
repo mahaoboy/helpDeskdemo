@@ -78,4 +78,22 @@ public class CommonUtil {
 		return outDate;
 	}
 	
+	public static boolean checkStringValidat(String strForCheck, String checkStr){
+		Pattern pattern;
+		Matcher matcher;
+		boolean urlCheck =false;
+
+		pattern= Pattern.compile(checkStr);
+		matcher = pattern.matcher(strForCheck);
+		
+		urlCheck = matcher.matches();
+		if (urlCheck) {
+			return true;
+		}
+
+		return false;
+	}
+	
+	
+	
 }

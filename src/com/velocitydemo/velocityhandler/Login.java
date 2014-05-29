@@ -25,9 +25,17 @@ public class Login extends VelocityViewServlet {
 	private VelocityEngine velo;
 	private String path;
 	private String PROPERTYNAME = "WEB-INF\\ldap.conf";
+	private String JIRA_PROPERTYNAME = "WEB-INF\\jira.conf";
 	private static HashMap<String, String> properties = new HashMap<String, String>();
+	private static HashMap<String, String> jira_properties = new HashMap<String, String>();
 	private LDAPAuthentication ldapc;
 	private String HelpDeskPath = "HelpDesk";
+	
+	private IssueInfo issueInfo = new IssueInfo();
+	private String jirasiteUrl;
+	private String Project;
+	private String adminUsername;
+	private String adminPassword;
 	
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
@@ -53,13 +61,30 @@ public class Login extends VelocityViewServlet {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		try {
+			if (jira_properties.isEmpty()) {
+				jira_properties = CommonUtil.readFile(path + JIRA_PROPERTYNAME);
+			}
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		if (!jira_properties.isEmpty()) {
+			this.jirasiteUrl = jira_properties.get("Protocol") + "://"
+					+ jira_properties.get("URL") + ":" + jira_properties.get("Port")
+					+ "/";
+			issueInfo.setJirasite(jirasiteUrl);
+			this.adminUsername = jira_properties.get("Username");
+			this.adminPassword = jira_properties.get("Password");
+		}
 
 	}
 
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
-		String meth = request.getMethod();
-
+		String meth = request.getMethod(); 
+		
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			try {
 				response.sendRedirect(HelpDeskPath);
@@ -79,13 +104,26 @@ public class Login extends VelocityViewServlet {
 				ctx.put("meth", warn);
 			} else {
 				if (ldapc.authenricate(inusername, inpassword)) {
-					IsLoggedIn.setLogin(response, request, inusername);
-					ctx.put("meth", inusername);
-					try {
-						response.sendRedirect(HelpDeskPath);
-					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+					
+					if(issueInfo.checkUserExistedOrNot(inusername, inpassword)){
+						IsLoggedIn.setLogin(response, request, inusername, inpassword);
+						ctx.put("meth", inusername);
+						try {
+							response.sendRedirect(HelpDeskPath);
+							Template nulltemplate = new Template();
+							try {
+								nulltemplate = velo.getTemplate("login.vm");
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+							return nulltemplate;
+						} catch (IOException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+					}else {
+						String warn = "无权限,JIRA中不存在此用户或密码不符合";
+						ctx.put("meth", warn);
 					}
 				} else {
 					String warn = "登陆失败,用户名或密码错误";
