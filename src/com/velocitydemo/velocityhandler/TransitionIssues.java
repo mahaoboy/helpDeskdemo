@@ -1,8 +1,8 @@
 package com.velocitydemo.velocityhandler;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 import javax.servlet.ServletException;
@@ -10,14 +10,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.velocity.Template;
+import net.sf.json.JSONObject;
+
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.context.Context;
 
 public class TransitionIssues extends HttpServlet {
-
-
 
 	private IssueInfo issueInfo = new IssueInfo();
 	private static final long serialVersionUID = 1L;
@@ -30,7 +28,7 @@ public class TransitionIssues extends HttpServlet {
 	private String deFaultStatusForSearch;
 	private static String userName = "userName";
 	private static String userPassword = "userPassword";
-	
+
 	private static String EMPTY_VALUE = "";
 
 	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
@@ -41,7 +39,7 @@ public class TransitionIssues extends HttpServlet {
 
 	private String loginPath = "Login";
 	private String searchPath = "SearchIssueEvent";
-	
+
 	@Override
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity“˝«Ê∂‘œÛ
@@ -74,10 +72,55 @@ public class TransitionIssues extends HttpServlet {
 			issueInfo.setJirasite(jirasiteUrl);
 		}
 	}
-	
+
 	@Override
-	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
-		// TODO Auto-generated method stub
+	protected void doGet(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
+		if (IsLoggedIn.checkLogin(this, response, request)) {
+			String uname = IsLoggedIn.getUserInfo(this, response, request,
+					userName);
+			String upassword = IsLoggedIn.getUserInfo(this, response, request,
+					userPassword);
+			issueInfo.setUsername(uname);
+			issueInfo.setPassword(upassword);
+			
+			String issueKey = request.getParameter("issueKey").isEmpty() ? ""
+					: request.getParameter("issueKey");
+			String transitionId = request.getParameter("transitionId")
+					.isEmpty() ? "" : request.getParameter("transitionId");
+			
+
+			response.setCharacterEncoding("UTF-8");
+			
+			if (!issueKey.isEmpty() && !transitionId.isEmpty()) {
+				
+				JSONObject transitionInfoJson = new JSONObject();
+				JSONObject itemContent = new JSONObject();
+				
+				try {
+					if (issueInfo.transitionIssue(issueKey, transitionId)) {
+						itemContent.put("result", "sucess");
+						itemContent.put("issuekey", issueKey);
+						HashMap<Object, Object> issueInfoItem = (HashMap<Object, Object>) issueInfo.getIssueInfo(issueInfo.getJirasite(),  issueKey,
+								issueInfo.getUsername(), issueInfo.getPassword());
+						itemContent.put("status", issueInfoItem.get("status"));
+					}else{
+						itemContent.put("result", "failed");
+					}
+					transitionInfoJson.put("content", itemContent);
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				
+				response.setContentType("application/json");
+				response.getWriter().write(transitionInfoJson.toString());
+			} else {
+				response.getWriter().write("");
+			}
+
+		} else {
+			response.getWriter().write("loginNeeded");
+		}
 	}
 }

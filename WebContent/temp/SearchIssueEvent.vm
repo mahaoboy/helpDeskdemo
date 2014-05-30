@@ -117,7 +117,7 @@
 						<td bgcolor="#6666FF" align="center">$content.get("issuetypeitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("descriptionitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("createditem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("statusitem")</td>
+						<td bgcolor="#6666FF" align="center" id='status$content.get("issuekey")'>$content.get("statusitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("resolutionitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("resolutiondescriptionitem")</td>
 						<td bgcolor="#6666FF" align="center"><div class="transition_functions" id='$content.get("issuekey")'><a href="" style="display:none;" class="closeInfoList">¹Ø±Õ</a> <a href="" style="display:none;"  class="reopenInfoList">| ÖØ¿ª</a></div></td>

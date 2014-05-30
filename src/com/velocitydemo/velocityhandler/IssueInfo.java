@@ -331,7 +331,7 @@ public class IssueInfo {
 		return url;
 	}
 
-	private Map<Object, Object> getIssueInfo(String jirasite, String issuekey,
+	public Map<Object, Object> getIssueInfo(String jirasite, String issuekey,
 			String usernameT, String passwordT) throws IOException {
 
 		String url = jirasite + "rest/api/2/issue/" + issuekey;
@@ -352,8 +352,10 @@ public class IssueInfo {
 		JSONObject assigneeJ = JSONObject.fromObject(fieldsJ.get("assignee"));
 
 		String statusNameJ = statusJ.get("name").toString();
-		String displayNameJ = assigneeJ.get("displayName").toString();
-
+		String displayNameJ = "";
+		if (!assigneeJ.isNullObject()) {
+			displayNameJ = assigneeJ.get("displayName").toString();
+		}
 		String fixversionS = "";
 		JSONObject fixVersionsJI;
 		for (int i = 0; i < fixVersionsJ.length; i++) {
@@ -875,7 +877,7 @@ public class IssueInfo {
 			issueJI = JSONObject.fromObject(issuesJ[i]);
 
 			String issueKey = issueJI.get("key").toString();
-			//getTransitionList(issueKey);
+			// getTransitionList(issueKey);
 
 			JSONObject fields = JSONObject.fromObject(issueJI.get("fields"));
 			if (!fields.isNullObject()) {
@@ -918,20 +920,20 @@ public class IssueInfo {
 						fields.get(this.resolutionDetailName).equals(null) ? ""
 								: fields.get(this.resolutionDetailName)
 										.toString());
-				/*if (!this.closeActionDetail.equals(null)) {
-					issueInfolist.put("canClosedOrNot", "yes");
-					issueInfolist.put("closeActionName",
-							this.closeActionDetail.get("name"));
-					issueInfolist.put("closeActionId",
-							this.closeActionDetail.get("id"));
-				}
-				if (!this.reopenActionDetail.equals(null)) {
-					issueInfolist.put("canReOpenOrNot", "yes");
-					issueInfolist.put("reopenActionName",
-							this.reopenActionDetail.get("name"));
-					issueInfolist.put("reopenActionId",
-							this.reopenActionDetail.get("id"));
-				}*/
+				/*
+				 * if (!this.closeActionDetail.equals(null)) {
+				 * issueInfolist.put("canClosedOrNot", "yes");
+				 * issueInfolist.put("closeActionName",
+				 * this.closeActionDetail.get("name"));
+				 * issueInfolist.put("closeActionId",
+				 * this.closeActionDetail.get("id")); } if
+				 * (!this.reopenActionDetail.equals(null)) {
+				 * issueInfolist.put("canReOpenOrNot", "yes");
+				 * issueInfolist.put("reopenActionName",
+				 * this.reopenActionDetail.get("name"));
+				 * issueInfolist.put("reopenActionId",
+				 * this.reopenActionDetail.get("id")); }
+				 */
 				issueInfolist.put("issuekey", issueKey);
 				searchResult.add(issueInfolist);
 			}
@@ -951,13 +953,15 @@ public class IssueInfo {
 				JSONObject.fromObject(response.toString()).get("transitions"))
 				.toArray();
 		JSONObject transitionJI;
+		this.closeActionDetail = new HashMap<String, String>();
+		this.reopenActionDetail = new HashMap<String, String>();
 		for (int i = 0; i < transitionJ.length; i++) {
 			transitionJI = JSONObject.fromObject(transitionJ[i]);
 			if (transitionJI.get("name").toString().equals(this.closeAction)) {
 				this.closeActionDetail.put("id", transitionJI.get("id")
 						.toString());
 				this.closeActionDetail.put("name", this.closeAction);
-				
+
 			} else if (transitionJI.get("name").toString()
 					.equals(this.reopenAction)) {
 				this.reopenActionDetail.put("id", transitionJI.get("id")
@@ -979,11 +983,10 @@ public class IssueInfo {
 			response = getConnectionToJira(url);
 			if (response.toString().startsWith("{")) {
 				errorJ = JSONObject.fromObject(
-						JSONObject.fromObject(response.toString())
-								.get("errorMessages"))
-						.isNullObject() ? "" : JSONObject
-						.fromObject(response.toString()).get("errorMessages")
-						.toString();
+						JSONObject.fromObject(response.toString()).get(
+								"errorMessages")).isNullObject() ? ""
+						: JSONObject.fromObject(response.toString())
+								.get("errorMessages").toString();
 				if (errorJ.equals("")) {
 					return true;
 				}
@@ -1000,5 +1003,74 @@ public class IssueInfo {
 		System.out.println("Response String : " + response.toString());
 
 		return false;
+	}
+
+	public boolean transitionIssue(String issueKey, String transitionId)
+			throws Exception {
+		String url = getSiteLink("rest/api/2/issue/" + issueKey
+				+ "/transitions");
+		String errorJ = "";
+		HttpURLConnection con = getPostConnectionToJira(url);
+		System.out.println(con.getRequestMethod());
+		JSONObject transitionJson = new JSONObject();
+		JSONObject transitionIdjson = new JSONObject();
+
+		transitionIdjson.put("id", transitionId);
+		transitionJson.put("transition", transitionIdjson);
+
+		String urlParameters = transitionJson.toString();
+
+		// Send post request
+		con.setDoOutput(true);
+		DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+		BufferedOutputStream bos = new BufferedOutputStream(wr);
+		bos.write(urlParameters.getBytes("UTF-8"));
+		bos.flush();
+		bos.close();
+		wr.flush();
+		wr.close();
+
+		int responseCode = con.getResponseCode();
+		System.out.println("\nSending 'POST' request to URL : " + url);
+		System.out.println("Post parameters : " + urlParameters);
+		System.out.println("Response Code : " + responseCode);
+
+		StringBuffer response = new StringBuffer();
+		String inputLine;
+
+		try {
+			if (responseCode < 400) {
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						con.getInputStream(), "UTF-8"));
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
+			} else {
+				BufferedReader in = new BufferedReader(new InputStreamReader(
+						con.getErrorStream(), "UTF-8"));
+				while ((inputLine = in.readLine()) != null) {
+					response.append(inputLine);
+				}
+				in.close();
+			}
+		} catch (Exception e) {
+
+			e.printStackTrace();
+			BufferedReader in = new BufferedReader(new InputStreamReader(
+					con.getErrorStream(), "UTF-8"));
+			while ((inputLine = in.readLine()) != null) {
+				response.append(inputLine);
+			}
+			in.close();
+		}
+
+		// print result
+		System.out.println("Response String : " + response.toString());
+		if (responseCode < 400) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 }

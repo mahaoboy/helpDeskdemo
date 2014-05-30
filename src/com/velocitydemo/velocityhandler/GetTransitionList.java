@@ -19,8 +19,6 @@ import org.apache.velocity.app.VelocityEngine;
 
 public class GetTransitionList extends HttpServlet {
 
-
-
 	private IssueInfo issueInfo = new IssueInfo();
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
@@ -28,12 +26,10 @@ public class GetTransitionList extends HttpServlet {
 	private String jirasiteUrl;
 	private static String userName = "userName";
 	private static String userPassword = "userPassword";
-	
 
 	private String PROPERTYNAME = "WEB-INF\\jira.conf";
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 
-	
 	@Override
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
@@ -64,47 +60,56 @@ public class GetTransitionList extends HttpServlet {
 					+ properties.get("URL") + ":" + properties.get("Port")
 					+ "/";
 			issueInfo.setJirasite(jirasiteUrl);
-			issueInfo.setUsername(properties.get("Username"));
-			issueInfo.setPassword(properties.get("Password"));
 			issueInfo.setCloseAction(properties.get("关闭动作"));
 			issueInfo.setReopenAction(properties.get("重开动作"));
 		}
 	}
-	
+
 	@Override
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request,
+			HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
 		if (IsLoggedIn.checkLogin(this, response, request)) {
-			String uname = IsLoggedIn.getUserInfo(this, response, request, userName);
+			String uname = IsLoggedIn.getUserInfo(this, response, request,
+					userName);
 			String upassword = IsLoggedIn.getUserInfo(this, response, request,
 					userPassword);
 
-			
+
+			issueInfo.setUsername(uname);
+			issueInfo.setPassword(upassword);
 			
 			String issueKey = request.getParameter("issueKey").isEmpty() ? ""
 					: request.getParameter("issueKey");
-			
-			if(!issueKey.isEmpty()){
-				
+
+			if (!issueKey.isEmpty()) {
+
 				issueInfo.getTransitionList(issueKey);
-				
-				
+
 				JSONObject transitionInfo = new JSONObject();
 				JSONObject closeInfoList = new JSONObject();
-				closeInfoList.put("id", issueInfo.getCloseActionDetail().get("id"));
-				closeInfoList.put("name", issueInfo.getCloseActionDetail().get("name"));
-				transitionInfo.put("closeInfoList", closeInfoList);
-				
 				JSONObject reopenInfoList = new JSONObject();
-				reopenInfoList.put("id", issueInfo.getReopenActionDetail().get("id"));
-				reopenInfoList.put("name", issueInfo.getReopenActionDetail().get("name"));
-				transitionInfo.put("reopenInfoList", reopenInfoList);
-			    
+
+				if (!issueInfo.getCloseActionDetail().equals(null)) {
+					closeInfoList.put("id", issueInfo.getCloseActionDetail()
+							.get("id"));
+					closeInfoList.put("name", issueInfo.getCloseActionDetail()
+							.get("name"));
+					transitionInfo.put("closeInfoList", closeInfoList);
+				}
+
+				if (!issueInfo.getReopenActionDetail().equals(null)) {
+					reopenInfoList.put("id", issueInfo.getReopenActionDetail()
+							.get("id"));
+					reopenInfoList.put("name", issueInfo
+							.getReopenActionDetail().get("name"));
+					transitionInfo.put("reopenInfoList", reopenInfoList);
+				}
+
 				response.setContentType("application/json");
-			    response.setCharacterEncoding("UTF-8");
-			    response.getWriter().write(transitionInfo.toString());
-			}else{
+				response.setCharacterEncoding("UTF-8");
+				response.getWriter().write(transitionInfo.toString());
+			} else {
 				response.getWriter().write("");
 			}
 
