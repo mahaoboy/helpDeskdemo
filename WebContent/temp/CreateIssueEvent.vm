@@ -8,13 +8,19 @@
 		#warn, .warn{font-size:20px; font-weight:bold; color:red;}
 		#title{font-size:25px; font-weight:bold; }
 		</style>
+		<script type="text/javascript">
+		
+		#include("js\\jquery-1.10.2.min.js")
+		
+		#include("js\\createIssue.js")
+		</script>
   </head>
   <body>
   #parse("HelpDesk.vm")
 	<center>
 	
 	<Span id="title" style="float: left; margin-left: 170px">创建事件</span>
-    <form id="admin" class="aui" method="post" action="CreateIssueEvent">
+    <form id="createIssue" class="aui" method="post" action="AjaxCreateIssueEvent">
 
         <div class="field-group">
              <label for="content">部门:</label>
@@ -35,7 +41,7 @@
 		#if($itemlist)
          <div class="field-group">
              <label for="content">事件类型:</label>
-			 <select name="issuetype">
+			 <select name="issuetype" id="issuetype">
 					#foreach ($content in $itemlist)
                   <option value="$content" #if($issuetype&&$issuetype==$content) selected="selected" #end >$content</option>
                   #end
@@ -49,7 +55,12 @@
              <input type="submit"  style="width:100px; float: left; margin-left: 150px" value="创建事件" class="button">
         </div>
     </form>
-	<Span id="warn">#if($warn)$warn#end</span>
+    <form enctype="multipart/form-data" id="uploadFileForm">
+	    <input name="file" type="file" />
+	    <input type="button" value="Upload" />
+	</form>
+	<progress></progress>
+	<Span id="warn" style="float:left; clear:both;">#if($warn)$warn#end</span>
     
 
     </center>

@@ -109,6 +109,28 @@
 		<welcome-file>/TransitionIssues</welcome-file>
 	</welcome-file-list>
 
+	<servlet>
+		<servlet-name>AjaxCreateIssueEvent</servlet-name>
+		<servlet-class>com.velocitydemo.velocityhandler.AjaxCreateIssueEvent</servlet-class>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>AjaxCreateIssueEvent</servlet-name>
+		<url-pattern>/AjaxCreateIssueEvent</url-pattern>
+	</servlet-mapping>
+	<welcome-file-list>
+		<welcome-file>/AjaxCreateIssueEvent</welcome-file>
+	</welcome-file-list>
+	
+	
+	<servlet>
+	   <servlet-name>AjaxUploadFile</servlet-name>
+	   <servlet-class>com.velocitydemo.velocityhandler.AjaxUploadFile</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	   <servlet-name>AjaxUploadFile</servlet-name>
+	   <url-pattern>/AjaxUploadFile</url-pattern>
+	</servlet-mapping>
 
 	<servlet>
 		<servlet-name>Confluence</servlet-name>

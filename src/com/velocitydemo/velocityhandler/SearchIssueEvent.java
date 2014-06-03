@@ -126,7 +126,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 		ctx.put("meth", meth);
 		// System.out.println("Method:" + meth);
 
-		if (meth == "POST" && request.getAttribute("Createdissuekey") == null) {
+		if (meth.equals("POST") && request.getAttribute("Createdissuekey") == null) {
 			String checkString = "";
 
 			String summary = request.getParameter("summary").isEmpty() ? ""
@@ -206,7 +206,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 			ctx.put("status", status);
 			ctx.put("resolution", resolution);
 			ctx.put("resolutiondescription", resolutiondescription);
-		} else if (meth == "GET") {
+		} else if (meth.equals("GET")) {
 			try {
 				if (aduname.equals(null)) {
 					try {
