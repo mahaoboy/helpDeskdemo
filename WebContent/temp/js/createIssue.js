@@ -1,6 +1,7 @@
 $(document).ready(function() {
 
 	createIssue();
+	uploadAttachFile();
 });
 function createIssue() {
 
@@ -15,20 +16,24 @@ function createIssue() {
 				var descriptionValue = $("#description").val();
 				var issuetypeValue = $("#issuetype").val();
 				
-				
 				if (departmentValue == '' || informationValue == ''
 						|| summaryValue == '' || descriptionValue == ''
 						|| issuetypeValue == '') {
-					$("#warn").text("鎵�鏈夊瓧娈靛潎涓嶈兘涓虹┖");
+					$("#warn").text("所有字段均不能为空");
 					return false;
 				}
 
+				var attachList = $("#attachmentList span");
+				var attachNameString = "";
+				attachList.each(function(){attachNameString = attachNameString +","+ $(this).text()});
+				
 				var posting = $.post(url, {
 					department : departmentValue,
 					information : informationValue,
 					summary : summaryValue,
 					description : descriptionValue,
-					issuetype : issuetypeValue
+					issuetype : issuetypeValue,
+					attachNameList: attachNameString
 				});
 				// Put the results in a div
 				posting.done(function(data) {
@@ -41,52 +46,56 @@ function createIssue() {
 			});
 }
 
+function uploadAttachFile() {
+	$('#uploadFileInput').change(
+			function() {
+				var file = this.files[0];
+				name = file.name;
+				size = file.size;
+				type = file.type;
 
-function uploadAttachFile(){
-	$(':file').change(function(){
-	    var file = this.files[0];
-	    name = file.name;
-	    size = file.size;
-	    type = file.type;
-
-	    if(file.name.length < 1) {
-	    	alert("File is not valid");
-	    }
-	    else if(file.size > 50000) {
-	        alert("File is to big");
-	    }
-	    else { 
-	        $(':submit').click(function(){
-	            var formData = new FormData($('#uploadFileForm')[0]);
-	            $.ajax({
-	                url: 'script',  //server script to process data
-	                type: 'POST',
-	                xhr: function() {  // Custom XMLHttpRequest
-	                    var myXhr = $.ajaxSettings.xhr();
-	                    if(myXhr.upload){ // Check if upload property exists
-	                        myXhr.upload.addEventListener('progress',progressHandlingFunction, false); // For handling the progress of the upload
-	                    }
-	                    return myXhr;
-	                },
-	                success: completeHandler = function(data) {
-	                	alert("ok");
-	                },
-	                error: errorHandler = function() {
-	                    alert("error");
-	                },
-	                // Form data
-	                data: formData,
-	                cache: false,
-	                contentType: false,
-	                processData: false
-	            }, 'json');
-	        });
-	    }
-	});
+				if (file.name.length < 1) {
+					alert("文件不合法");
+				} else if (file.size > 50000000) {
+					alert("文件太大");
+				} else {
+					var formData = new FormData($('#uploadFileForm')[0]);
+					$.ajax({
+						url : 'AjaxUploadFile', // server script to process data
+						type : 'POST',
+						xhr : function() { // Custom XMLHttpRequest
+							var myXhr = $.ajaxSettings.xhr();
+							if (myXhr.upload) { // Check if upload property
+								// exists
+								$("#warn").text("Uploading");
+								$("#createIssueSubmitButton").attr("disabled","disabled");
+							}
+							return myXhr;
+						},
+						success : completeHandler = function(data, textStatus, jqXHR) {
+							if (data.error == "login") {
+								window.location.href = "Login";
+							} else if (data.success == "success") {
+								$("#warn").text("");
+								$("#createIssueSubmitButton").removeAttr("disabled");
+								$("#attachmentList").append("<span style='float: left;'>"+name+"</span><br />");
+							} else{
+								alert(data.error);
+								$("#warn").text("");
+								$("#createIssueSubmitButton").removeAttr("disabled");
+							}
+						},
+						error : errorHandler = function(jqXHR, textStatus, errorThrown) {
+							alert("error");
+						},
+						// Form data
+						data : formData,
+						cache : false,
+						dataType: 'json',
+						contentType : false,
+						processData : false
+					}, 'json');
+				}
+			});
 }
 
-function progressHandlingFunction(e){
-    if(e.lengthComputable){
-        $('progress').attr({value:e.loaded,max:e.total});
-    }
-}

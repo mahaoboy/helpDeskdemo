@@ -48,18 +48,22 @@
                   </select>
           </div>
        #end
-
+		<div class="field-group" id="attachmentList">
+             <label for="content" style="float: left;">附件:</label>
+             
+        </div>
 
  
         <div class="field-group">
-             <input type="submit"  style="width:100px; float: left; margin-left: 150px" value="创建事件" class="button">
+             <input type="submit" id="createIssueSubmitButton" style="width:100px; float: left; margin-left: 150px" value="创建事件" class="button">
         </div>
     </form>
-    <form enctype="multipart/form-data" id="uploadFileForm">
-	    <input name="file" type="file" />
-	    <input type="button" value="Upload" />
-	</form>
-	<progress></progress>
+    <div style="float:left; margin: -200px 0 0 300px;">
+    <span style="float: left">添加附件</span>
+    <form id="uploadFileForm" action='AjaxUploadFile' method='post' enctype='multipart/form-data' style="float: left; margin: 0px 0px 0px 20px;">
+    	<input id="uploadFileInput" type='file' name='file' size='50' />
+    </form>
+
 	<Span id="warn" style="float:left; clear:both;">#if($warn)$warn#end</span>
     
 
