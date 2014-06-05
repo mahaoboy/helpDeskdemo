@@ -27,6 +27,9 @@ function createIssue() {
 				var attachNameString = "";
 				attachList.each(function(){attachNameString = attachNameString +","+ $(this).text()});
 				
+				$("#warn").text("Creating Issue");
+				$("#createIssueSubmitButton").attr("disabled","disabled");
+				
 				var posting = $.post(url, {
 					department : departmentValue,
 					information : informationValue,
@@ -41,6 +44,7 @@ function createIssue() {
 						window.location.href = "Login";
 					} else {
 						$("#warn").text(data);
+						$("#createIssueSubmitButton").removeAttr("disabled");
 					}
 				});
 			});

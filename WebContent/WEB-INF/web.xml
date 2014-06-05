@@ -132,6 +132,19 @@
 	   <url-pattern>/AjaxUploadFile</url-pattern>
 	</servlet-mapping>
 
+
+	<servlet>
+	   <servlet-name>DownloadAttachment</servlet-name>
+	   <servlet-class>com.velocitydemo.velocityhandler.DownloadAttachment</servlet-class>
+	</servlet>
+	
+	<servlet-mapping>
+	   <servlet-name>DownloadAttachment</servlet-name>
+	   <url-pattern>/DownloadAttachment</url-pattern>
+	</servlet-mapping>
+
+
+
 	<servlet>
 		<servlet-name>Confluence</servlet-name>
 		<servlet-class>com.velocitydemo.velocityhandler.Confluence</servlet-class>

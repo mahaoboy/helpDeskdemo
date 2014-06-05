@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 import java.util.regex.Matcher;
@@ -20,6 +19,22 @@ import java.util.regex.Pattern;
 
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.entity.mime.content.ContentBody;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+
 import sun.misc.BASE64Encoder;
 
 public class IssueInfo {
@@ -802,6 +817,7 @@ public class IssueInfo {
 		fieldsj.add("issuetype");
 		fieldsj.add("created");
 		fieldsj.add("resolution");
+		fieldsj.add("attachment");
 		fieldsj.add(this.aduserName);
 		fieldsj.add(this.departmentName);
 		fieldsj.add(this.informationName);
@@ -872,7 +888,7 @@ public class IssueInfo {
 				.toArray();
 		JSONObject issueJI;
 		for (int i = 0; i < issuesJ.length; i++) {
-			HashMap<String, String> issueInfolist = new HashMap<String, String>();
+			HashMap<String, Object> issueInfolist = new HashMap<String, Object>();
 
 			issueJI = JSONObject.fromObject(issuesJ[i]);
 
@@ -920,20 +936,28 @@ public class IssueInfo {
 						fields.get(this.resolutionDetailName).equals(null) ? ""
 								: fields.get(this.resolutionDetailName)
 										.toString());
-				/*
-				 * if (!this.closeActionDetail.equals(null)) {
-				 * issueInfolist.put("canClosedOrNot", "yes");
-				 * issueInfolist.put("closeActionName",
-				 * this.closeActionDetail.get("name"));
-				 * issueInfolist.put("closeActionId",
-				 * this.closeActionDetail.get("id")); } if
-				 * (!this.reopenActionDetail.equals(null)) {
-				 * issueInfolist.put("canReOpenOrNot", "yes");
-				 * issueInfolist.put("reopenActionName",
-				 * this.reopenActionDetail.get("name"));
-				 * issueInfolist.put("reopenActionId",
-				 * this.reopenActionDetail.get("id")); }
-				 */
+
+				if (!JSONArray.fromObject(fields.get("attachment")).isEmpty()) {
+					Vector<Object> attachmentItem = new Vector<Object>();
+					System.out.println(fields.get("attachment"));
+					Object[] attachmentJS = JSONArray.fromObject(
+							fields.get("attachment")).toArray();
+					for (int js = 0; js < attachmentJS.length; js++) {
+						HashMap<String, String> attachmentList = new HashMap<String, String>();
+System.out.println(attachmentJS[js].toString());
+						JSONObject jsItem = JSONObject
+								.fromObject(attachmentJS[js]);
+						if (!jsItem.isNullObject()) {
+							attachmentList.put("attachmentId", jsItem.get("id")
+									.toString());
+							attachmentList.put("attachmentName",
+									jsItem.get("filename").toString());
+							attachmentItem.add(attachmentList);
+						}
+					}
+					issueInfolist.put("attachmentItem", attachmentItem);
+				}
+
 				issueInfolist.put("issuekey", issueKey);
 				searchResult.add(issueInfolist);
 			}
@@ -1072,5 +1096,60 @@ public class IssueInfo {
 		} else {
 			return false;
 		}
+	}
+
+	public boolean addAttachmentToIssue(String issueKey, String fullfilename)
+			throws IOException {
+		String url = getSiteLink("rest/api/2/issue/" + issueKey
+				+ "/attachments");
+		CloseableHttpClient httpclient = HttpClients.createDefault();
+
+		HttpPost httppost = new HttpPost(url);
+		httppost.setHeader("X-Atlassian-Token", "nocheck");
+
+		BASE64Encoder base64Encoder = new BASE64Encoder();
+		String authStr = username + ":" + password;
+		String authEnc = base64Encoder.encode(authStr.getBytes());
+
+		httppost.setHeader("Authorization", "Basic " + authEnc);
+
+		File fileToUpload = new File(fullfilename);
+		FileBody fileBody = new FileBody(fileToUpload);
+		HttpEntity entity = MultipartEntityBuilder.create()
+				.addPart("file", fileBody).build();
+
+		httppost.setEntity(entity);
+		String mess = "executing request " + httppost.getRequestLine();
+		System.out.println(mess);
+		HttpResponse response = null;
+		try {
+			response = httpclient.execute(httppost);
+		} catch (ClientProtocolException e) {
+			return false;
+		} catch (IOException e) {
+			return false;
+		}
+		HttpEntity result = response.getEntity();
+		ResponseHandler<String> handler = new BasicResponseHandler();
+
+		int statusCode = response.getStatusLine().getStatusCode();
+
+		String inputLine;
+		StringBuffer responseString = new StringBuffer();
+		BufferedReader in = new BufferedReader(new InputStreamReader(
+				result.getContent(), "UTF-8"));
+		while ((inputLine = in.readLine()) != null) {
+			responseString.append(inputLine);
+		}
+		in.close();
+
+		System.out.println(statusCode + " : " + responseString);
+
+		if (statusCode == 200) {
+			return true;
+		} else {
+			return false;
+		}
+
 	}
 }

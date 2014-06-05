@@ -32,9 +32,11 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
 
 	private String PROPERTYNAME = "WEB-INF\\jira.conf";
+	private String PROPERTYNAME_FILE = "temp\\upload\\";
+	private static String UPLOADFILE = "UPLOADFILE";
+	private static String createPath = "CreateIssueEvent";
+
 	private static HashMap<String, String> properties = new HashMap<String, String>();
-
-
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
@@ -77,7 +79,7 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 
 	protected Template handleRequest(HttpServletRequest request,
 			HttpServletResponse response, Context ctx) {
-		
+
 		Template nulltemplate = new Template();
 		response.setContentType("text/html; charset=utf-8");
 		try {
@@ -86,7 +88,7 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 		} catch (Exception e3) {
 			e3.printStackTrace();
 		}
-			
+
 		String meth = request.getMethod();
 		String strContentType = request.getContentType();
 		System.out.println(strContentType);
@@ -106,42 +108,45 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 			ctx.put("warn", "login");
 			return nulltemplate;
 		}
-  
+
 		ctx.put("meth", meth);
 		// System.out.println("Method:" + meth);
 		if (meth.equals("POST")) {
-			     
-			String summary = request.getParameter("summary").isEmpty() ? ""
-					: request.getParameter("summary");
-			String description = request.getParameter("description").isEmpty() ? ""
-					: request.getParameter("description");
-			String issuetype = request.getParameter("issuetype").isEmpty() ? ""
-					: request.getParameter("issuetype");
-			String department = request.getParameter("department").isEmpty() ? ""
-					: request.getParameter("department");
-			String information = request.getParameter("information").isEmpty() ? ""
-					: request.getParameter("information");
-			String checkString = information + department + issuetype
-					+ description + summary;
-   
+			try {
+				String summary = request.getParameter("summary").isEmpty() ? ""
+						: request.getParameter("summary");
+				String description = request.getParameter("description")
+						.isEmpty() ? "" : request.getParameter("description");
+				String issuetype = request.getParameter("issuetype").isEmpty() ? ""
+						: request.getParameter("issuetype");
+				String department = request.getParameter("department")
+						.isEmpty() ? "" : request.getParameter("department");
+				String information = request.getParameter("information")
+						.isEmpty() ? "" : request.getParameter("information");
+				String checkString = information + department + issuetype
+						+ description + summary;
+
 				// Map<String, Object> infoList = new HashMap<String, Object>();
-				if (jirasiteUrl.isEmpty() || Project.isEmpty() || summary.isEmpty()
-						|| description.isEmpty() || issuetype.isEmpty()
-						|| information.isEmpty() || department.isEmpty()) {
+				if (jirasiteUrl.isEmpty() || Project.isEmpty()
+						|| summary.isEmpty() || description.isEmpty()
+						|| issuetype.isEmpty() || information.isEmpty()
+						|| department.isEmpty()) {
 					String warn = "创建失败，字段不能为空";
 					ctx.put("warn", warn);
 					return nulltemplate;
-				} else if (!CommonUtil.checkStringValidation(checkString, checkPat)) {
+				} else if (!CommonUtil.checkStringValidation(checkString,
+						checkPat)) {
 					ctx.put("warn",
 							"输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
 					return nulltemplate;
 				} else {
 					String responseStr = "";
 					try {
-						responseStr = issueInfo.createIssue(jirasiteUrl, Project,
-								summary, description, issuetype, aduname,
-								adpassword, information, department, aduname);
-  
+						responseStr = issueInfo.createIssue(jirasiteUrl,
+								Project, summary, description, issuetype,
+								aduname, adpassword, information, department,
+								aduname);
+
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -151,11 +156,39 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 						ctx.put("warn", warn);
 						return nulltemplate;
 					} else {
-							ctx.put("warn", responseStr + "创建成功");
-							return nulltemplate;
+						ctx.put("warn", responseStr + "创建成功");
+
+						String attachNameList = request.getParameter(
+								"attachNameList").isEmpty() ? "" : request
+								.getParameter("attachNameList");
+						if (!attachNameList.isEmpty()) {
+							System.out.println(attachNameList);
+							String[] attachListArray = attachNameList
+									.split(",");
+							for (int i = 0; i < attachListArray.length; i++) {
+								if (!attachListArray[i].trim().isEmpty()) {
+									UploadFileToJira UFJ = new UploadFileToJira(
+											UPLOADFILE,
+											path + PROPERTYNAME_FILE
+													+ attachListArray[i].trim(),
+											responseStr, issueInfo);
+									Thread UFJT = new Thread(UFJ);
+									UFJT.start();
+								}
+							}
+						} else {
+							System.out.println("attachemnt is empty");
+						}
+
+						return nulltemplate;
 					}
 				}
+			} catch (NullPointerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				ctx.put("warn", "创建失败，缺少字段");
 			}
+		}
 
 		return nulltemplate;
 	}

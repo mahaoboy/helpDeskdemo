@@ -107,6 +107,7 @@
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件描述</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件提交时间</td>
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理状态</td> <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理方式</td>
              <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">解决方案</td>
+             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">附件</td>
               <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">操作</td>
             </tr>
             #foreach ($content in $searchResultViaJQL)
@@ -120,6 +121,13 @@
 						<td bgcolor="#6666FF" align="center" id='status$content.get("issuekey")'>$content.get("statusitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("resolutionitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("resolutiondescriptionitem")</td>
+						<td bgcolor="#6666FF" align="center">
+						#if($content.get("attachmentItem"))
+						#foreach ($attachmentItem in $content.get("attachmentItem"))
+							<a href='DownloadAttachment?id=$attachmentItem.get("attachmentId")&name=$attachmentItem.get("attachmentName")'>$attachmentItem.get("attachmentName")</a>
+						#end
+						#end
+						</td>
 						<td bgcolor="#6666FF" align="center"><div class="transition_functions" id='$content.get("issuekey")'><a href="" style="display:none;" class="closeInfoList">关闭</a> <a href="" style="display:none;"  class="reopenInfoList">| 重开</a></div></td>
 			</tr>
 			#end

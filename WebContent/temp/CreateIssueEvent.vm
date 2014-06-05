@@ -64,7 +64,7 @@
     	<input id="uploadFileInput" type='file' name='file' size='50' />
     </form>
 
-	<Span id="warn" style="float:left; clear:both;">#if($warn)$warn#end</span>
+	<Span id="warn" style="float:left; clear:both; margin-top: 180px;">#if($warn)$warn#end</span>
     
 
     </center>

@@ -12,6 +12,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import org.apache.http.entity.mime.content.ContentBody;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;

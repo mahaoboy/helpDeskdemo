@@ -29,7 +29,7 @@ public class AjaxUploadFile extends VelocityViewServlet {
 	private static String userName = "userName";
 	private static String userPassword = "userPassword";
 	
-	private String[] checkPat = { "=", "\"", "'", "\\\\", "/", " ", ","};
+	private String[] checkPat = { "=", "\"", "'", "\\\\", "/", " ", ",", "%", ":", "\\$", "\\?", "\\*"};
 
 	public void init() {
 		// Get the file location where it would be stored.

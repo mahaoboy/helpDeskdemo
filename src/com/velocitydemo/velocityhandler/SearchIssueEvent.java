@@ -30,7 +30,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 	private String deFaultStatusForSearch;
 	private static String userName = "userName";
 	private static String userPassword = "userPassword";
-	
+
 	private static String EMPTY_VALUE = "";
 
 	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
@@ -71,8 +71,8 @@ public class SearchIssueEvent extends VelocityViewServlet {
 					+ properties.get("URL") + ":" + properties.get("Port")
 					+ "/";
 			this.Project = properties.get("Project");
-			//this.Username = properties.get("Username");
-			//this.Password = properties.get("Password");
+			// this.Username = properties.get("Username");
+			// this.Password = properties.get("Password");
 			this.deFaultStatusForSearch = properties.get("默认搜索事件状态");
 			issueInfo.setAduserName(properties.get("姓名"));
 			issueInfo.setDepartmentName(properties.get("部门"));
@@ -101,9 +101,9 @@ public class SearchIssueEvent extends VelocityViewServlet {
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			aduname = IsLoggedIn.getUserInfo(this, response, request, userName);
-			adpassword = IsLoggedIn.getUserInfo(this, response, request, userPassword);
+			adpassword = IsLoggedIn.getUserInfo(this, response, request,
+					userPassword);
 			ctx.put("aduname", aduname);
-			
 
 			issueInfo.setUsername(aduname);
 			issueInfo.setPassword(adpassword);
@@ -126,86 +126,98 @@ public class SearchIssueEvent extends VelocityViewServlet {
 		ctx.put("meth", meth);
 		// System.out.println("Method:" + meth);
 
-		if (meth.equals("POST") && request.getAttribute("Createdissuekey") == null) {
+		if (meth.equals("POST")
+				&& request.getAttribute("Createdissuekey") == null) {
 			String checkString = "";
+			try {
+				String summary = request.getParameter("summary").isEmpty() ? ""
+						: request.getParameter("summary");
+				String description = request.getParameter("description")
+						.isEmpty() ? "" : request.getParameter("description");
+				String issuetype = request.getParameter("issuetype").isEmpty() ? ""
+						: request.getParameter("issuetype");
+				String department = request.getParameter("department")
+						.isEmpty() ? "" : request.getParameter("department");
+				String information = request.getParameter("information")
+						.isEmpty() ? "" : request.getParameter("information");
 
-			String summary = request.getParameter("summary").isEmpty() ? ""
-					: request.getParameter("summary");
-			String description = request.getParameter("description").isEmpty() ? ""
-					: request.getParameter("description");
-			String issuetype = request.getParameter("issuetype").isEmpty() ? ""
-					: request.getParameter("issuetype");
-			String department = request.getParameter("department").isEmpty() ? ""
-					: request.getParameter("department");
-			String information = request.getParameter("information").isEmpty() ? ""
-					: request.getParameter("information");
+				String createtime = request.getParameter("createtime")
+						.isEmpty() ? "" : request.getParameter("createtime");
+				String createtimeend = request.getParameter("createtimeend")
+						.isEmpty() ? "" : request.getParameter("createtimeend");
+				String status = request.getParameter("status").isEmpty() ? ""
+						: request.getParameter("status");
+				String resolution = request.getParameter("resolution")
+						.isEmpty() ? "" : request.getParameter("resolution");
+				String resolutiondescription = request.getParameter(
+						"resolutiondescription").isEmpty() ? "" : request
+						.getParameter("resolutiondescription");
 
-			String createtime = request.getParameter("createtime").isEmpty() ? ""
-					: request.getParameter("createtime");
-			String createtimeend = request.getParameter("createtimeend")
-					.isEmpty() ? "" : request.getParameter("createtimeend");
-			String status = request.getParameter("status").isEmpty() ? ""
-					: request.getParameter("status");
-			String resolution = request.getParameter("resolution").isEmpty() ? ""
-					: request.getParameter("resolution");
-			String resolutiondescription = request.getParameter(
-					"resolutiondescription").isEmpty() ? "" : request
-					.getParameter("resolutiondescription");
+				checkString += resolutiondescription + resolution + status
+						+ createtime + information + department + issuetype
+						+ description + summary;
 
-			checkString += resolutiondescription + resolution + status
-					+ createtime + information + department + issuetype
-					+ description + summary;
-
-			if ((!createtime.isEmpty() && !CommonUtil.checkStringValidat(
-					createtime, checkForDate))
-					|| (!createtimeend.isEmpty() && !CommonUtil
-							.checkStringValidat(createtimeend, checkForDate))) {
-				ctx.put("warn", "日期格式不对: yyyy-mm-dd");
-			}
-			else  if (!CommonUtil.checkStringValidation(checkString, checkPat)){
-				ctx.put("warn",
-						"输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
-			}else {
-				try {
-					if (aduname.equals(null)) {
-						try {
-							response.sendRedirect(loginPath);
-							Template nulltemplate = new Template();
+				if ((!createtime.isEmpty() && !CommonUtil.checkStringValidat(
+						createtime, checkForDate))
+						|| (!createtimeend.isEmpty() && !CommonUtil
+								.checkStringValidat(createtimeend, checkForDate))) {
+					ctx.put("warn", "日期格式不对: yyyy-mm-dd");
+				} else if (!CommonUtil.checkStringValidation(checkString,
+						checkPat)) {
+					ctx.put("warn",
+							"输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
+				} else {
+					try {
+						if (aduname.equals(null)) {
 							try {
-								nulltemplate = velo.getTemplate("SearchIssueEvent.vm");
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
+								response.sendRedirect(loginPath);
+								Template nulltemplate = new Template();
+								try {
+									nulltemplate = velo
+											.getTemplate("SearchIssueEvent.vm");
+								} catch (Exception e) {
+									// TODO Auto-generated catch block
+									e.printStackTrace();
+								}
+								return nulltemplate;
+							} catch (IOException e) {
 								e.printStackTrace();
 							}
-							return nulltemplate;
-						} catch (IOException e) {
-							e.printStackTrace();
+						} else {
+							Vector<Object> searchResultViaJQL = issueInfo
+									.searchIssue(aduname, summary, description,
+											issuetype, department, information,
+											createtime, createtimeend, status,
+											resolution, resolutiondescription);
+							ctx.put("searchResultViaJQL", searchResultViaJQL);
+							ctx.put("total", issueInfo.getTotalNumber());
 						}
-					} else {
-						Vector<Object> searchResultViaJQL = issueInfo
-								.searchIssue(aduname, summary, description,
-										issuetype, department, information,
-										createtime, createtimeend, status,
-										resolution, resolutiondescription);
-						ctx.put("searchResultViaJQL", searchResultViaJQL);
-						ctx.put("total", issueInfo.getTotalNumber());
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
 				}
-			} 
 
-			ctx.put("summary", summary);
-			ctx.put("description", description);
-			ctx.put("issuetype", issuetype);
-			ctx.put("department", department);
-			ctx.put("information", information);
-			ctx.put("createtime", createtime);
-			ctx.put("createtimeend", createtimeend);
-			ctx.put("status", status);
-			ctx.put("resolution", resolution);
-			ctx.put("resolutiondescription", resolutiondescription);
+				ctx.put("summary", summary);
+				ctx.put("description", description);
+				ctx.put("issuetype", issuetype);
+				ctx.put("department", department);
+				ctx.put("information", information);
+				ctx.put("createtime", createtime);
+				ctx.put("createtimeend", createtimeend);
+				ctx.put("status", status);
+				ctx.put("resolution", resolution);
+				ctx.put("resolutiondescription", resolutiondescription);
+			} catch (NullPointerException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				try {
+					response.sendRedirect(searchPath);
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
 		} else if (meth.equals("GET")) {
 			try {
 				if (aduname.equals(null)) {
@@ -213,7 +225,8 @@ public class SearchIssueEvent extends VelocityViewServlet {
 						response.sendRedirect(loginPath);
 						Template nulltemplate = new Template();
 						try {
-							nulltemplate = velo.getTemplate("SearchIssueEvent.vm");
+							nulltemplate = velo
+									.getTemplate("SearchIssueEvent.vm");
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -226,7 +239,8 @@ public class SearchIssueEvent extends VelocityViewServlet {
 					Vector<Object> searchResultViaJQL = issueInfo.searchIssue(
 							aduname, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 							EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-							this.deFaultStatusForSearch, EMPTY_VALUE, EMPTY_VALUE);
+							this.deFaultStatusForSearch, EMPTY_VALUE,
+							EMPTY_VALUE);
 					ctx.put("searchResultViaJQL", searchResultViaJQL);
 					ctx.put("total", issueInfo.getTotalNumber());
 				}
@@ -234,14 +248,15 @@ public class SearchIssueEvent extends VelocityViewServlet {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-		}else {
+		} else {
 			try {
 				if (aduname.equals(null)) {
 					try {
 						response.sendRedirect(loginPath);
 						Template nulltemplate = new Template();
 						try {
-							nulltemplate = velo.getTemplate("SearchIssueEvent.vm");
+							nulltemplate = velo
+									.getTemplate("SearchIssueEvent.vm");
 						} catch (Exception e) {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
@@ -254,7 +269,8 @@ public class SearchIssueEvent extends VelocityViewServlet {
 					Vector<Object> searchResultViaJQL = issueInfo.searchIssue(
 							aduname, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 							EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-							this.deFaultStatusForSearch, EMPTY_VALUE, EMPTY_VALUE);
+							this.deFaultStatusForSearch, EMPTY_VALUE,
+							EMPTY_VALUE);
 					ctx.put("searchResultViaJQL", searchResultViaJQL);
 					ctx.put("total", issueInfo.getTotalNumber());
 				}
