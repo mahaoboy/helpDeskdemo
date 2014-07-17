@@ -29,12 +29,12 @@ public class AjaxUploadFile extends VelocityViewServlet {
 	private static String userName = "userName";
 	private static String userPassword = "userPassword";
 	
-	private String[] checkPat = { "=", "\"", "'", "\\\\", "/", " ", ",", "%", ":", "\\$", "\\?", "\\*"};
+	private String[] checkPat = StaticConstantVar.UploadCheckPat;
 
 	public void init() {
 		// Get the file location where it would be stored.
 		filePath = getServletContext().getRealPath("/").toString()
-				+ "temp\\upload\\";
+				+ StaticConstantVar.PROPERTYNAME_FILE_UPLOAD;
 	}
 
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -63,7 +63,7 @@ public class AjaxUploadFile extends VelocityViewServlet {
 		// maximum size that will be stored in memory
 		factory.setSizeThreshold(maxMemSize);
 		// Location to save data that is larger than maxMemSize.
-		factory.setRepository(new File("c:\\temp"));
+		factory.setRepository(new File(StaticConstantVar.tempPathSystem));
 
 		// Create a new file upload handler
 		ServletFileUpload upload = new ServletFileUpload(factory);
@@ -94,16 +94,16 @@ public class AjaxUploadFile extends VelocityViewServlet {
 					boolean isInMemory = fi.isInMemory();
 					long sizeInBytes = fi.getSize();
 					// Write the file
-					if (fileName.lastIndexOf("\\") >= 0) {
+					if (fileName.lastIndexOf(File.separator) >= 0) {
 						file = new File(
 								filePath
 										+ fileName.substring(fileName
-												.lastIndexOf("\\")));
+												.lastIndexOf(File.separator)));
 					} else {
 						file = new File(
 								filePath
 										+ fileName.substring(fileName
-												.lastIndexOf("\\") + 1));
+												.lastIndexOf(File.separator) + 1));
 					}
 					fi.write(file);
 				}

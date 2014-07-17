@@ -39,6 +39,7 @@ import sun.misc.BASE64Encoder;
 
 public class IssueInfo {
 	private final String USER_AGENT = "Mozilla/5.0";
+	private final String maxResults = "100000";
 
 	public String getJirasite() {
 		return jirasite;
@@ -106,6 +107,72 @@ public class IssueInfo {
 	private String jsonStr;
 	private String issueKey;
 	private String issueLink;
+	private String userInputName;
+	private String eventType;
+	private String userInputNameValue;
+	private String eventTypeValue;
+	private String workAround;
+	private String reasonOfNotPass;
+	private String eventTypeName;
+	private String workAroundName;
+	private String reasonOfNotPassName;
+	private String extraJQLString = "";
+
+	public String getExtraJQLString() {
+		return extraJQLString;
+	}
+
+	public void setExtraJQLString(String extraJQLString) {
+		this.extraJQLString = extraJQLString;
+	}
+
+	public String getWorkAround() {
+		return workAround;
+	}
+
+	public void setWorkAround(String workAround) {
+		this.workAround = workAround;
+	}
+
+	public String getReasonOfNotPass() {
+		return reasonOfNotPass;
+	}
+
+	public void setReasonOfNotPass(String reasonOfNotPass) {
+		this.reasonOfNotPass = reasonOfNotPass;
+	}
+
+	public String getUserInputNameValue() {
+		return userInputNameValue;
+	}
+
+	public void setUserInputNameValue(String userInputNameValue) {
+		this.userInputNameValue = userInputNameValue;
+	}
+
+	public String getEventTypeValue() {
+		return eventTypeValue;
+	}
+
+	public void setEventTypeValue(String eventTypeValue) {
+		this.eventTypeValue = eventTypeValue;
+	}
+
+	public String getEventType() {
+		return eventType;
+	}
+
+	public void setEventType(String eventType) {
+		this.eventType = eventType;
+	}
+
+	public String getUserInputName() {
+		return userInputName;
+	}
+
+	public void setUserInputName(String userInputName) {
+		this.userInputName = userInputName;
+	}
 
 	public String getDepartment() {
 		return department;
@@ -233,9 +300,11 @@ public class IssueInfo {
 		JSONObject fieldsj = new JSONObject();
 		JSONObject projectj = new JSONObject();
 		JSONObject issuetypej = new JSONObject();
+		JSONObject issueeventj = new JSONObject();
 
 		issuetypej.put("name", issuetype);
 		projectj.put("key", project);
+		issueeventj.put("value", eventTypeValue);
 
 		fieldsj.put("summary", summary);
 		fieldsj.put("issuetype", issuetypej);
@@ -245,6 +314,8 @@ public class IssueInfo {
 			fieldsj.put(this.aduserName, this.aduser);
 			fieldsj.put(this.departmentName, this.department);
 			fieldsj.put(this.informationName, this.information);
+			fieldsj.put(this.userInputName, this.userInputNameValue);
+			fieldsj.put(this.eventType, issueeventj);
 		}
 		outJson.put("fields", fieldsj);
 
@@ -294,20 +365,21 @@ public class IssueInfo {
 	}
 
 	public String createIssue(String jirasite, String project, String summary,
-			String description, String issuetype, String username,
+			String description, String eventTypeValue, String username,
 			String password, String information, String department,
-			String aduname) throws Exception {
+			String aduname, String userInputNameValue) throws Exception {
 
 		this.jirasite = jirasite;
 		this.project = project;
 		this.summary = summary;
 		this.description = description;
-		this.issuetype = issuetype;
+		this.eventTypeValue = eventTypeValue;
 		this.username = username;
 		this.password = password;
 		this.information = information;
 		this.department = department;
 		this.aduser = aduname;
+		this.userInputNameValue = userInputNameValue;
 
 		jsonStr = createJson();
 		System.out.println("jsonStr:---: " + jsonStr);
@@ -678,6 +750,89 @@ public class IssueInfo {
 		return issueTypeN;
 	}
 
+	public Vector<Object> getEventTypes() throws IOException {
+
+		String url = getSiteLink("rest/api/2/issue/createmeta?projectKeys="
+				+ project + "&expand=projects.issuetypes.fields");
+
+		StringBuffer response = getConnectionToJira(url);
+
+		System.out.println("Response String : " + response.toString());
+		JSONObject jsonObject = JSONObject.fromObject(response.toString());
+
+		Vector<Object> issueTypeN = new Vector<Object>();
+		Object[] issueTypesJ = JSONArray.fromObject(
+				JSONObject.fromObject(
+						JSONArray.fromObject(jsonObject.get("projects")).get(0)
+								.toString()).get("issuetypes")).toArray();
+		JSONObject issueTypeJI;
+		for (int i = 0; i < issueTypesJ.length; i++) {
+
+			issueTypeJI = JSONObject.fromObject(issueTypesJ[i]);
+			String nameI = issueTypeJI.get("name").toString();
+			Boolean subtaksOrNot = (Boolean) issueTypeJI.get("subtask");
+			if (!nameI.isEmpty() && !subtaksOrNot && nameI.equals(issuetype)) {
+				JSONObject issueTypeFields = JSONObject.fromObject(issueTypeJI
+						.get("fields").toString());
+				JSONObject eventTypeField = JSONObject
+						.fromObject(issueTypeFields.get(eventType).toString());
+				Object[] createMetaFieldsOptions = JSONArray.fromObject(
+						eventTypeField.get("allowedValues").toString())
+						.toArray();
+				for (int j = 0; j < createMetaFieldsOptions.length; j++) {
+					String option = JSONObject
+							.fromObject(createMetaFieldsOptions[j])
+							.get("value").toString();
+					issueTypeN.add(option);
+				}
+			}
+		}
+
+		return issueTypeN;
+	}
+
+	public Vector<Object> getWorkAroundTypes() throws IOException {
+
+		String url = getSiteLink("rest/api/2/issue/createmeta?projectKeys="
+				+ project + "&expand=projects.issuetypes.fields");
+
+		StringBuffer response = getConnectionToJira(url);
+
+		System.out.println("Response String : " + response.toString());
+		JSONObject jsonObject = JSONObject.fromObject(response.toString());
+
+		Vector<Object> issueTypeN = new Vector<Object>();
+		Object[] issueTypesJ = JSONArray.fromObject(
+				JSONObject.fromObject(
+						JSONArray.fromObject(jsonObject.get("projects")).get(0)
+								.toString()).get("issuetypes")).toArray();
+		JSONObject issueTypeJI;
+		for (int i = 0; i < issueTypesJ.length; i++) {
+
+			issueTypeJI = JSONObject.fromObject(issueTypesJ[i]);
+			String nameI = issueTypeJI.get("name").toString();
+			Boolean subtaksOrNot = (Boolean) issueTypeJI.get("subtask");
+			if (!nameI.isEmpty() && !subtaksOrNot && nameI.equals(issuetype)) {
+				JSONObject issueTypeFields = JSONObject.fromObject(issueTypeJI
+						.get("fields").toString());
+
+				JSONObject eventTypeField = JSONObject
+						.fromObject(issueTypeFields.get(workAround).toString());
+				Object[] createMetaFieldsOptions = JSONArray.fromObject(
+						eventTypeField.get("allowedValues").toString())
+						.toArray();
+				for (int j = 0; j < createMetaFieldsOptions.length; j++) {
+					String option = JSONObject
+							.fromObject(createMetaFieldsOptions[j])
+							.get("value").toString();
+					issueTypeN.add(option);
+				}
+			}
+		}
+
+		return issueTypeN;
+	}
+
 	public Vector<Object> getIssueStatus() throws IOException {
 
 		String url = getSiteLink("rest/api/2/project/" + project + "/statuses");
@@ -753,14 +908,22 @@ public class IssueInfo {
 				this.information = fieldNameJI.get("name").toString();
 			} else if (fieldNameJI.get("id").toString().equals(this.aduserName)) {
 				this.aduser = fieldNameJI.get("name").toString();
+			} else if (fieldNameJI.get("id").toString().equals(this.eventType)) {
+				this.eventTypeName = fieldNameJI.get("name").toString();
+			} else if (fieldNameJI.get("id").toString().equals(this.workAround)) {
+				this.workAroundName = fieldNameJI.get("name").toString();
+			} else if (fieldNameJI.get("id").toString()
+					.equals(this.reasonOfNotPass)) {
+				this.reasonOfNotPassName = fieldNameJI.get("name").toString();
 			}
 		}
 	}
 
 	private String createJqlJson(String uname, String summary,
-			String description, String issuetype, String department,
+			String description, String eventtype, String department,
 			String information, String createtime, String createtimeend,
-			String status, String resolution, String resolutiondescription) {
+			String status, String workaround, String resolutiondescription,
+			String reasonOfNotPassString) {
 		JSONObject outJson = new JSONObject();
 		JSONArray fieldsj = new JSONArray();
 
@@ -780,7 +943,7 @@ public class IssueInfo {
 			jql += " and description ~ " + "'" + description + "'";
 		}
 		if (!issuetype.isEmpty()) {
-			jql += " and issuetype = " + issuetype;
+			jql += " and issuetype = '" + issuetype+ "'";
 		}
 		if (!department.isEmpty()) {
 			jql += " and '" + this.department + "'" + " ~ " + "'" + department
@@ -794,11 +957,23 @@ public class IssueInfo {
 			jql += " and '" + this.resolutionDetail + "'" + " ~ " + "'"
 					+ resolutiondescription + "'";
 		}
+
+		if (!reasonOfNotPassString.isEmpty()) {
+			jql += " and '" + this.reasonOfNotPassName + "'" + " ~ " + "'"
+					+ reasonOfNotPassString + "'";
+		}
+		if (!eventtype.isEmpty()) {
+			jql += " and '" + this.eventTypeName + "'" + " = " + "'" +eventtype+ "'";
+		}
 		if (!status.isEmpty()) {
 			jql += " and status = " + status;
 		}
-		if (!resolution.isEmpty()) {
+/*		if (!resolution.isEmpty()) {
 			jql += " and resolution = " + resolution;
+		}*/
+		
+		if (!workaround.isEmpty()) {
+			jql += " and '" + this.workAroundName + "'"+ " = '" +workaround+ "'";
 		}
 
 		if (!createtime.isEmpty()) {
@@ -808,7 +983,9 @@ public class IssueInfo {
 		if (!createtimeend.isEmpty()) {
 			jql += " and createdDate <= " + createtimeend;
 		}
-
+		if(!this.extraJQLString.isEmpty()){
+			jql += extraJQLString;
+		}
 		outJson.put("jql", jql);
 
 		fieldsj.add("summary");
@@ -818,19 +995,23 @@ public class IssueInfo {
 		fieldsj.add("created");
 		fieldsj.add("resolution");
 		fieldsj.add("attachment");
+		fieldsj.add("assignee");
 		fieldsj.add(this.aduserName);
 		fieldsj.add(this.departmentName);
 		fieldsj.add(this.informationName);
 		fieldsj.add(this.resolutionDetailName);
+		fieldsj.add(this.eventType);
+		fieldsj.add(this.workAround);
+		fieldsj.add(this.reasonOfNotPass);
 		outJson.put("fields", fieldsj);
-
+		outJson.put("maxResults", maxResults);
 		return outJson.toString();
 	}
 
 	public Vector<Object> searchIssue(String uname, String summary,
-			String description, String issuetype, String department,
+			String description, String eventType, String department,
 			String information, String createtime, String createtimeend,
-			String status, String resolution, String resolutiondescription)
+			String status, String resolution, String resolutiondescription, String reasonOfNotPassString )
 			throws Exception {
 
 		String url = jirasite + "rest/api/2/search";
@@ -839,8 +1020,8 @@ public class IssueInfo {
 
 		getFieldName();
 		String urlParameters = createJqlJson(uname, summary, description,
-				issuetype, department, information, createtime, createtimeend,
-				status, resolution, resolutiondescription);
+				eventType, department, information, createtime, createtimeend,
+				status, resolution, resolutiondescription, reasonOfNotPassString);
 
 		// Send post request
 		con.setDoOutput(true);
@@ -901,6 +1082,11 @@ public class IssueInfo {
 						"summaryitem",
 						fields.get("summary").equals(null) ? "" : fields.get(
 								"summary").toString());
+				issueInfolist.put(
+						"assigneeitem",
+						fields.get("assignee").equals(null) ? "" : JSONObject
+								.fromObject(fields.get("assignee")).get("displayName")
+								.toString());
 				issueInfolist.put("descriptionitem", fields.get("description")
 						.equals(null) ? "" : fields.get("description")
 						.toString());
@@ -908,21 +1094,14 @@ public class IssueInfo {
 						fields.get("status").equals(null) ? "" : JSONObject
 								.fromObject(fields.get("status")).get("name")
 								.toString());
-				issueInfolist.put("issuetypeitem",
-						fields.get("issuetype").equals(null) ? "" : JSONObject
-								.fromObject(fields.get("issuetype"))
-								.get("name").toString());
+				
 				issueInfolist.put(
 						"createditem",
 						fields.get("created").equals(null) ? "" : CommonUtil
 								.formatDateFromString(fields.get("created")
 										.toString(), "yyyy-MM-dd'T'hh:mm:ss",
 										"yyyy-MM-dd hh:mm:ss"));
-				issueInfolist.put(
-						"resolutionitem",
-						fields.get("resolution").equals(null) ? "" : JSONObject
-								.fromObject(fields.get("resolution"))
-								.get("name").toString());
+				
 				issueInfolist.put("unameitem", fields.get(this.aduserName)
 						.equals(null) ? "" : fields.get(this.aduserName)
 						.toString());
@@ -936,7 +1115,21 @@ public class IssueInfo {
 						fields.get(this.resolutionDetailName).equals(null) ? ""
 								: fields.get(this.resolutionDetailName)
 										.toString());
-
+				System.out.println(fields.get(this.eventType));
+				issueInfolist.put("issuetypeitem",
+						fields.get(this.eventType).equals(null) ? "" : JSONObject
+								.fromObject(fields.get(this.eventType))
+								.get("value").toString());
+				issueInfolist.put(
+						"resolutionitem",
+						fields.get(this.workAround).equals(null) ? "" : JSONObject
+								.fromObject(fields.get(this.workAround))
+								.get("value").toString());
+				issueInfolist.put(
+						"reasonOfNotPassitem",
+						fields.get(this.reasonOfNotPass).equals(null) ? "" : fields.get(this.reasonOfNotPass)
+								.toString());
+				
 				if (!JSONArray.fromObject(fields.get("attachment")).isEmpty()) {
 					Vector<Object> attachmentItem = new Vector<Object>();
 					System.out.println(fields.get("attachment"));

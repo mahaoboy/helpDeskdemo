@@ -21,24 +21,23 @@
 	
 	<Span id="title" style="float: left; margin-left: 170px">创建事件</span>
     <form id="createIssue" class="aui" method="post" action="AjaxCreateIssueEvent">
-
-        <div class="field-group">
-             <label for="content">部门:</label>
-             <input type="text" id="department" name="department" class="text" value="#if($department)$department#end">
-        </div>
-        <div class="field-group">
-             <label for="content">联系电话&邮件地址:</label>
-             <input type="text" id="information" name="information" class="text" value="#if($information)$information#end">
-        </div>
-        <div class="field-group">
+		<div class="field-group">
              <label for="content">事件主题:</label>
              <input type="text" id="summary" name="summary" class="text" value="#if($summary)$summary#end">
         </div>
 		<div class="field-group">
-             <label for="content">事件描述:</label>
-             <input type="text" id="description" name="description" class="text" value="#if($description)$description#end">
+             <label for="content">姓名:</label>
+             <input type="text" id="userInputName" name="userInputName" class="text" value="#if($userInputName)$userInputName#end">
         </div>
-		#if($itemlist)
+        <div class="field-group">
+             <label for="content">申请部门:</label>
+             <input type="text" id="department" name="department" class="text" value="#if($department)$department#end">
+        </div>
+        <div class="field-group">
+             <label for="content">联系方式:</label>
+             <input type="text" id="information" name="information" class="text" value="#if($information)$information#end">
+        </div>
+        #if($itemlist)
          <div class="field-group">
              <label for="content">事件类型:</label>
 			 <select name="issuetype" id="issuetype">
@@ -47,7 +46,12 @@
                   #end
                   </select>
           </div>
-       #end
+        #end
+		<div class="field-group">
+             <label for="content">事件描述:</label>
+             <input type="text" id="description" name="description" class="text" value="#if($description)$description#end">
+        </div>
+		
 		<div class="field-group" id="attachmentList">
              <label for="content" style="float: left;">附件:</label>
              

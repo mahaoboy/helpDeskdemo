@@ -1,6 +1,6 @@
 <html>
 <h1>$meth</h1>
-<form action="/TomCat7/Login" method="POST">
+<form action="Login" method="POST">
 µÇÂ½<input type="text" name="username">
 <br />
 µÇÂ½<input type="password" name="password" />

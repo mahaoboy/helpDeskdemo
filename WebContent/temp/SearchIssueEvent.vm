@@ -29,11 +29,11 @@
         
 
         <div class="field-group">
-             <label for="content">部门:</label>
+             <label for="content">申请部门:</label>
              <input type="text" id="department" name="department" class="text" value="#if($department)$department#end">
         </div>
         <div class="field-group">
-             <label for="content">联系电话&邮件地址:</label>
+             <label for="content">联系方式:</label>
              <input type="text" id="information" name="information" class="text" value="#if($information)$information#end">
         </div>
         <div class="field-group">
@@ -87,26 +87,36 @@
        #end
  
        <div class="field-group">
-             <label for="content">解决方案:</label>
+             <label for="content">IT解决方案:</label>
              <input type="text" id="resolutiondescription" name="resolutiondescription" class="text" value="#if($resolutiondescription)$resolutiondescription#end">
         </div>
- 
+ 		<div class="field-group">
+             <label for="content">未通过原因:</label>
+             <input type="text" id="reasonOfNotPass" name="reasonOfNotPass" class="text" value="#if($reasonOfNotPass)$reasonOfNotPass#end">
+        </div>
  
         <div class="field-group">
              <input type="submit" style="width:100px; margin-left:200px;" value="提交搜索" class="button">
         </div>
     </form>
 </div>
+
+<div style="float: left; clear: both; width: 100%;">
+<a href="SearchIssueEvent?IssueStatus=notClosed" style="float: left;  margin-right:20px">所有我提交未关闭的事件</a>
+<a href="SearchIssueEvent?IssueStatus=all"  style="float: left;  margin-left:20px">所有我提交的事件</a>
+</div>
     #if($searchResultViaJQL)
     <div style="float: left; clear: both; width: 100%;">
 		<Span id="title">事件搜索结果: 一共$total个结果</span>
 		
     <table width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
-            <tr><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">姓名</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">部门</td>
-            <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">联系电话&邮件地址</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件类型</td>
+            <tr><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">姓名</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">申请部门</td>
+            <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">联系方式</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件类型</td>
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件描述</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件提交时间</td>
+            <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">经办人</td>
             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理状态</td> <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理方式</td>
-             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">解决方案</td>
+             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">IT解决方案</td>
+             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">未通过原因</td>
              <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">附件</td>
               <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">操作</td>
             </tr>
@@ -118,17 +128,20 @@
 						<td bgcolor="#6666FF" align="center">$content.get("issuetypeitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("descriptionitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("createditem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("assigneeitem")</td>
 						<td bgcolor="#6666FF" align="center" id='status$content.get("issuekey")'>$content.get("statusitem")</td>
 						<td bgcolor="#6666FF" align="center">$content.get("resolutionitem")</td>
+						
 						<td bgcolor="#6666FF" align="center">$content.get("resolutiondescriptionitem")</td>
+						<td bgcolor="#6666FF" align="center">$content.get("reasonOfNotPassitem")</td>
 						<td bgcolor="#6666FF" align="center">
 						#if($content.get("attachmentItem"))
 						#foreach ($attachmentItem in $content.get("attachmentItem"))
-							<a href='DownloadAttachment?id=$attachmentItem.get("attachmentId")&name=$attachmentItem.get("attachmentName")'>$attachmentItem.get("attachmentName")</a>
+							<a href='DownloadAttachment?id=$attachmentItem.get("attachmentId")&name=$attachmentItem.get("attachmentName")'>$attachmentItem.get("attachmentName")</a><br />
 						#end
 						#end
 						</td>
-						<td bgcolor="#6666FF" align="center"><div class="transition_functions" id='$content.get("issuekey")'><a href="" style="display:none;" class="closeInfoList">关闭</a> <a href="" style="display:none;"  class="reopenInfoList">| 重开</a></div></td>
+						<td bgcolor="#6666FF" align="center"><div class="transition_functions" id='$content.get("issuekey")'><a href="" style="display:none;" class="closeInfoList">通过</a> <a href="" style="display:none;"  class="reopenInfoList">| 不通过</a></div></td>
 			</tr>
 			#end
     </table>

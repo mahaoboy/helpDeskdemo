@@ -12,12 +12,14 @@ import javax.servlet.http.HttpSession;
 import org.apache.velocity.tools.view.VelocityViewServlet;
 
 public class IsLoggedIn {
-	private static String IsLoggedInString = "IsLoggedIn";
-	private static String userName = "userName";
-	private static String userPassword = "userPassword";
-	private static String SESSION_COOKIE_NAME = "SESSION_COOKIE";
-	private static String PROPERTYNAME = "WEB-INF\\ldap.conf";
-	private static String JIRA_PROPERTYNAME = "WEB-INF\\jira.conf";
+	private static String IsLoggedInString = StaticConstantVar.IsLoggedInString;
+	private static String userName = StaticConstantVar.userName;
+	private static String userPassword = StaticConstantVar.userPassword;
+	
+	private static String userDisplayName = StaticConstantVar.userDisplayName;
+	private static String SESSION_COOKIE_NAME = StaticConstantVar.SESSION_COOKIE_NAME;
+	private static String PROPERTYNAME = StaticConstantVar.LDAP_PROPERTYNAME;
+	private static String JIRA_PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 	private static HttpServlet scontext;
 	private static String adminUserName;
@@ -65,7 +67,7 @@ public class IsLoggedIn {
 		scontext = servletContext;
 		if (!isLDAPenabled()) {
 			getAdminInfo();
-			setLogin(response, request, adminUserName, adminPassWord);
+			setLogin(response, request, adminUserName, adminPassWord, adminUserName);
 			return true;
 		}
 		Cookie cookies[] = request.getCookies();
@@ -94,7 +96,7 @@ public class IsLoggedIn {
 	}
 
 	public static void setLogin(HttpServletResponse response,
-			HttpServletRequest request, String userid , String inpassword) {
+			HttpServletRequest request, String userid , String inpassword, String displayNameofUser) {
 		HttpSession session = request.getSession();
 		HttpSessionCollector.sessionadded(session);
 
@@ -103,6 +105,7 @@ public class IsLoggedIn {
 			session.setAttribute(IsLoggedInString, true);
 			session.setAttribute(userName, userid);
 			session.setAttribute(userPassword, inpassword);
+			session.setAttribute(userDisplayName, displayNameofUser);
 		}
 
 		Cookie cookies[] = request.getCookies();
@@ -149,6 +152,8 @@ public class IsLoggedIn {
 							uinfo = (String) session.getAttribute(userName);
 						}else if (session != null && userinfo.equals(userPassword)){
 							uinfo = (String) session.getAttribute(userPassword);
+						}else if (session != null && userinfo.equals(userDisplayName)){
+							uinfo = (String) session.getAttribute(userDisplayName);
 						}
 					}
 				}

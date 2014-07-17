@@ -28,19 +28,20 @@ public class SearchIssueEvent extends VelocityViewServlet {
 	private String Username;
 	private String Password;
 	private String deFaultStatusForSearch;
-	private static String userName = "userName";
-	private static String userPassword = "userPassword";
+	private String colsedStatusForSearch;
+	private static String userName = StaticConstantVar.userName;
+	private static String userPassword = StaticConstantVar.userPassword;
+	private static String userDisplayName = StaticConstantVar.userDisplayName;
+	private static String EMPTY_VALUE = StaticConstantVar.EMPTY_VALUE;
 
-	private static String EMPTY_VALUE = "";
+	private String[] checkPat = StaticConstantVar.checkPat;
+	private String checkForDate = StaticConstantVar.checkForDate;
 
-	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
-	private String checkForDate = "^\\d{4}-\\d{2}-\\d{2}$";
-
-	private String PROPERTYNAME = "WEB-INF\\jira.conf";
+	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 
-	private String loginPath = "Login";
-	private String searchPath = "SearchIssueEvent";
+	private String loginPath = StaticConstantVar.loginPath;
+	private String searchPath = StaticConstantVar.searchPath;
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
@@ -48,7 +49,8 @@ public class SearchIssueEvent extends VelocityViewServlet {
 		path = this.getServletContext().getRealPath("/");
 		// String path =
 		// this.getClass().getClassLoader().getResource("").getPath();
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path
+				+ StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "UTF-8");
 
@@ -74,10 +76,15 @@ public class SearchIssueEvent extends VelocityViewServlet {
 			// this.Username = properties.get("Username");
 			// this.Password = properties.get("Password");
 			this.deFaultStatusForSearch = properties.get("默认搜索事件状态");
-			issueInfo.setAduserName(properties.get("姓名"));
-			issueInfo.setDepartmentName(properties.get("部门"));
-			issueInfo.setInformationName(properties.get("联系电话邮件地址"));
-			issueInfo.setResolutionDetailName(properties.get("解决方案"));
+			this.colsedStatusForSearch = properties.get("关闭状态");
+			issueInfo.setAduserName(properties.get("域用户姓名"));
+			issueInfo.setDepartmentName(properties.get("申请部门"));
+			issueInfo.setInformationName(properties.get("联系方式"));
+			issueInfo.setResolutionDetailName(properties.get("IT解决方案"));
+			issueInfo.setWorkAround(properties.get("处理方式"));
+			issueInfo.setReasonOfNotPass(properties.get("未通过原因"));
+			issueInfo.setIssuetype(properties.get("issueType"));
+			issueInfo.setEventType(properties.get("事件类型"));
 			issueInfo.setJirasite(jirasiteUrl);
 			issueInfo.setProject(Project);
 			issueInfo.setCloseAction(properties.get("关闭状态"));
@@ -98,12 +105,15 @@ public class SearchIssueEvent extends VelocityViewServlet {
 		String meth = request.getMethod();
 		String aduname = null;
 		String adpassword = null;
+		String displayName = null;
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			aduname = IsLoggedIn.getUserInfo(this, response, request, userName);
 			adpassword = IsLoggedIn.getUserInfo(this, response, request,
 					userPassword);
-			ctx.put("aduname", aduname);
+			displayName = IsLoggedIn.getUserInfo(this, response, request,
+					userDisplayName);
+			ctx.put("aduname", displayName);
 
 			issueInfo.setUsername(aduname);
 			issueInfo.setPassword(adpassword);
@@ -152,10 +162,13 @@ public class SearchIssueEvent extends VelocityViewServlet {
 				String resolutiondescription = request.getParameter(
 						"resolutiondescription").isEmpty() ? "" : request
 						.getParameter("resolutiondescription");
+				String reasonOfNotPass = request
+						.getParameter("reasonOfNotPass").isEmpty() ? ""
+						: request.getParameter("reasonOfNotPass");
 
 				checkString += resolutiondescription + resolution + status
 						+ createtime + information + department + issuetype
-						+ description + summary;
+						+ description + summary + reasonOfNotPass;
 
 				if ((!createtime.isEmpty() && !CommonUtil.checkStringValidat(
 						createtime, checkForDate))
@@ -185,10 +198,12 @@ public class SearchIssueEvent extends VelocityViewServlet {
 							}
 						} else {
 							Vector<Object> searchResultViaJQL = issueInfo
-									.searchIssue(aduname, summary, description,
-											issuetype, department, information,
-											createtime, createtimeend, status,
-											resolution, resolutiondescription);
+									.searchIssue(displayName, summary,
+											description, issuetype, department,
+											information, createtime,
+											createtimeend, status, resolution,
+											resolutiondescription,
+											reasonOfNotPass);
 							ctx.put("searchResultViaJQL", searchResultViaJQL);
 							ctx.put("total", issueInfo.getTotalNumber());
 						}
@@ -208,6 +223,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 				ctx.put("status", status);
 				ctx.put("resolution", resolution);
 				ctx.put("resolutiondescription", resolutiondescription);
+				ctx.put("reasonOfNotPass", reasonOfNotPass);
 			} catch (NullPointerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -218,36 +234,22 @@ public class SearchIssueEvent extends VelocityViewServlet {
 					e1.printStackTrace();
 				}
 			}
-		} else if (meth.equals("GET")) {
-			try {
-				if (aduname.equals(null)) {
-					try {
-						response.sendRedirect(loginPath);
-						Template nulltemplate = new Template();
-						try {
-							nulltemplate = velo
-									.getTemplate("SearchIssueEvent.vm");
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-						}
-						return nulltemplate;
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				} else {
-					Vector<Object> searchResultViaJQL = issueInfo.searchIssue(
-							aduname, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-							EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-							this.deFaultStatusForSearch, EMPTY_VALUE,
-							EMPTY_VALUE);
-					ctx.put("searchResultViaJQL", searchResultViaJQL);
-					ctx.put("total", issueInfo.getTotalNumber());
-				}
-			} catch (Exception e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			/*
+			 * } else if (meth.equals("GET")) { try { if (aduname.equals(null))
+			 * { try { response.sendRedirect(loginPath); Template nulltemplate =
+			 * new Template(); try { nulltemplate = velo
+			 * .getTemplate("SearchIssueEvent.vm"); } catch (Exception e) { //
+			 * TODO Auto-generated catch block e.printStackTrace(); } return
+			 * nulltemplate; } catch (IOException e) { e.printStackTrace(); } }
+			 * else { Vector<Object> searchResultViaJQL = issueInfo.searchIssue(
+			 * displayName, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+			 * EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+			 * this.deFaultStatusForSearch, EMPTY_VALUE, EMPTY_VALUE,
+			 * EMPTY_VALUE); ctx.put("searchResultViaJQL", searchResultViaJQL);
+			 * ctx.put("total", issueInfo.getTotalNumber()); } } catch
+			 * (Exception e) { // TODO Auto-generated catch block
+			 * e.printStackTrace(); }
+			 */
 		} else {
 			try {
 				if (aduname.equals(null)) {
@@ -266,11 +268,34 @@ public class SearchIssueEvent extends VelocityViewServlet {
 						e.printStackTrace();
 					}
 				} else {
-					Vector<Object> searchResultViaJQL = issueInfo.searchIssue(
-							aduname, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-							EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-							this.deFaultStatusForSearch, EMPTY_VALUE,
-							EMPTY_VALUE);
+					String IssueStatus = request.getParameterMap().containsKey(
+							"IssueStatus") ? request
+							.getParameter("IssueStatus") : "";
+					Vector<Object> searchResultViaJQL;
+
+					if (IssueStatus.equals(StaticConstantVar.notClosed)) {
+						issueInfo.setExtraJQLString(" and status !="
+								+ this.colsedStatusForSearch);
+						searchResultViaJQL = issueInfo.searchIssue(displayName,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, EMPTY_VALUE);
+					} else if (IssueStatus.equals(StaticConstantVar.all)) {
+						issueInfo.setExtraJQLString("");
+						searchResultViaJQL = issueInfo.searchIssue(displayName,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, EMPTY_VALUE);
+
+					} else {
+						searchResultViaJQL = issueInfo.searchIssue(displayName,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
+								EMPTY_VALUE, this.deFaultStatusForSearch,
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE);
+					}
 					ctx.put("searchResultViaJQL", searchResultViaJQL);
 					ctx.put("total", issueInfo.getTotalNumber());
 				}
@@ -284,13 +309,13 @@ public class SearchIssueEvent extends VelocityViewServlet {
 		Vector statuses = new Vector();
 		Vector resolutions = new Vector();
 		try {
-			issuetypes = issueInfo.getIssueTypes();
+			issuetypes = issueInfo.getEventTypes();
 			ctx.put("issuetypes", issuetypes);
 
 			statuses = issueInfo.getIssueStatus();
 			ctx.put("statuss", statuses);
 
-			resolutions = issueInfo.getIssueResolution();
+			resolutions = issueInfo.getWorkAroundTypes();
 			ctx.put("resolutions", resolutions);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block

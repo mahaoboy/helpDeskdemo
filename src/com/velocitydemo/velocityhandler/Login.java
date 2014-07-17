@@ -12,8 +12,8 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import org.apache.http.entity.mime.content.ContentBody;
 
+import org.apache.http.entity.mime.content.ContentBody;
 import org.apache.commons.lang.StringUtils;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
@@ -25,12 +25,12 @@ public class Login extends VelocityViewServlet {
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
 	private String path;
-	private String PROPERTYNAME = "WEB-INF\\ldap.conf";
-	private String JIRA_PROPERTYNAME = "WEB-INF\\jira.conf";
+	private static String PROPERTYNAME = StaticConstantVar.LDAP_PROPERTYNAME;
+	private static String JIRA_PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 	private static HashMap<String, String> jira_properties = new HashMap<String, String>();
 	private LDAPAuthentication ldapc;
-	private String HelpDeskPath = "HelpDesk";
+	private String HelpDeskPath = StaticConstantVar.HelpDeskPath;
 	
 	private IssueInfo issueInfo = new IssueInfo();
 	private String jirasiteUrl;
@@ -44,7 +44,7 @@ public class Login extends VelocityViewServlet {
 		// String path =
 		// this.getClass().getClassLoader().getResource("").getPath();
 		path = this.getServletContext().getRealPath("/");
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "GBK");
 
@@ -105,9 +105,9 @@ public class Login extends VelocityViewServlet {
 				ctx.put("meth", warn);
 			} else {
 				if (ldapc.authenricate(inusername, inpassword)) {
-					
+					String displayNameofUser = ldapc.getUserDisplayName(inusername);
 					if(issueInfo.checkUserExistedOrNot(inusername, inpassword)){
-						IsLoggedIn.setLogin(response, request, inusername, inpassword);
+						IsLoggedIn.setLogin(response, request, inusername, inpassword, displayNameofUser);
 						ctx.put("meth", inusername);
 						try {
 							response.sendRedirect(HelpDeskPath);

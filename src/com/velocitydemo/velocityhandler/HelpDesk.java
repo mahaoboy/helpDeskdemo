@@ -18,14 +18,14 @@ public class HelpDesk extends VelocityViewServlet {
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
 	private String path;
-	private String loginPath = "Login";
-	private static String userName = "userName";
+	private String loginPath = StaticConstantVar.loginPath;
+	private static String userName = StaticConstantVar.userName;
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
 		Properties prop = new Properties();// 设置vm模板的装载路径
 		path = this.getServletContext().getRealPath("/");
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "GBK");
 

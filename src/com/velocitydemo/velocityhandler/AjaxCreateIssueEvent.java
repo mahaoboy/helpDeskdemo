@@ -26,15 +26,15 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 	private String path;
 	private String jirasiteUrl;
 	private String Project;
-	private static String userName = "userName";
-	private static String userPassword = "userPassword";
+	private static String userName = StaticConstantVar.userName;
+	private static String userPassword = StaticConstantVar.userPassword;
+	private static String userDisplayName = StaticConstantVar.userDisplayName;
+	private String[] checkPat = StaticConstantVar.checkPat;
 
-	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
-
-	private String PROPERTYNAME = "WEB-INF\\jira.conf";
-	private String PROPERTYNAME_FILE = "temp\\upload\\";
-	private static String UPLOADFILE = "UPLOADFILE";
-	private static String createPath = "CreateIssueEvent";
+	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
+	private String PROPERTYNAME_FILE = StaticConstantVar.PROPERTYNAME_FILE_UPLOAD;
+	private static String UPLOADFILE = StaticConstantVar.UPLOADFILE;
+	private static String createPath = StaticConstantVar.createPath;
 
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 
@@ -44,7 +44,7 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 		path = this.getServletContext().getRealPath("/");
 		// String path =
 		// this.getClass().getClassLoader().getResource("").getPath();
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "UTF-8");
 
@@ -69,9 +69,12 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 			this.Project = properties.get("Project");
 			// this.Username = properties.get("Username");
 			// this.Password = properties.get("Password");
-			issueInfo.setAduserName(properties.get("姓名"));
-			issueInfo.setDepartmentName(properties.get("部门"));
-			issueInfo.setInformationName(properties.get("联系电话邮件地址"));
+			issueInfo.setAduserName(properties.get("域用户姓名"));
+			issueInfo.setUserInputName(properties.get("姓名"));
+			issueInfo.setDepartmentName(properties.get("申请部门"));
+			issueInfo.setInformationName(properties.get("联系方式"));
+			issueInfo.setEventType(properties.get("事件类型"));
+			issueInfo.setIssuetype(properties.get("issueType"));
 			issueInfo.setJirasite(jirasiteUrl);
 			issueInfo.setProject(Project);
 		}
@@ -95,12 +98,15 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 
 		String aduname = null;
 		String adpassword = null;
+		String displayName = null;
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			aduname = IsLoggedIn.getUserInfo(this, response, request, userName);
 			adpassword = IsLoggedIn.getUserInfo(this, response, request,
 					userPassword);
-			ctx.put("aduname", aduname);
+			displayName = IsLoggedIn.getUserInfo(this, response, request,
+					userDisplayName);
+			ctx.put("aduname", displayName);
 
 			issueInfo.setUsername(aduname);
 			issueInfo.setPassword(adpassword);
@@ -123,14 +129,17 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 						.isEmpty() ? "" : request.getParameter("department");
 				String information = request.getParameter("information")
 						.isEmpty() ? "" : request.getParameter("information");
+				String userInputName = request.getParameter("userInputName").isEmpty() ? ""
+						: request.getParameter("userInputName");
+				
 				String checkString = information + department + issuetype
-						+ description + summary;
+						+ description + summary + userInputName;
 
 				// Map<String, Object> infoList = new HashMap<String, Object>();
 				if (jirasiteUrl.isEmpty() || Project.isEmpty()
 						|| summary.isEmpty() || description.isEmpty()
 						|| issuetype.isEmpty() || information.isEmpty()
-						|| department.isEmpty()) {
+						|| department.isEmpty() || userInputName.isEmpty()) {
 					String warn = "创建失败，字段不能为空";
 					ctx.put("warn", warn);
 					return nulltemplate;
@@ -145,7 +154,7 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 						responseStr = issueInfo.createIssue(jirasiteUrl,
 								Project, summary, description, issuetype,
 								aduname, adpassword, information, department,
-								aduname);
+								displayName, userInputName);
 
 					} catch (Exception e) {
 						// TODO Auto-generated catch block

@@ -8,11 +8,13 @@ function showActionList() {
 }
 function getlist(issuekey) {
 	var aItem = $('#' + issuekey);
+	
 	$.get('GetTransitionList?issueKey=' + issuekey, function(responseJson) {
 
 		aItem.children().each(
 				function() {
 					var itemElement = $(this);
+					itemElement.attr("style", "display:none;");
 					var className = itemElement.attr("class");
 					$.each(responseJson, function(index, item) {
 						if (index == className && item.id != null) {

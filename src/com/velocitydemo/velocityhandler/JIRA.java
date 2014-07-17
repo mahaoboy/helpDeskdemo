@@ -31,7 +31,7 @@ public class JIRA extends VelocityViewServlet {
                 Properties prop = new Properties();// 设置vm模板的装载路径
                // String path = this.getClass().getClassLoader().getResource("").getPath();
                 String path = this.getServletContext().getRealPath("/");
-                prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+                prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + StaticConstantVar.tempPath);
                 prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
                 prop.setProperty(Velocity.OUTPUT_ENCODING, "GBK");
                 

@@ -15,7 +15,7 @@ function createIssue() {
 				var summaryValue = $("#summary").val();
 				var descriptionValue = $("#description").val();
 				var issuetypeValue = $("#issuetype").val();
-				
+				var userInputName = $("#userInputName").val();
 				if (departmentValue == '' || informationValue == ''
 						|| summaryValue == '' || descriptionValue == ''
 						|| issuetypeValue == '') {
@@ -36,6 +36,7 @@ function createIssue() {
 					summary : summaryValue,
 					description : descriptionValue,
 					issuetype : issuetypeValue,
+					userInputName : userInputName,
 					attachNameList: attachNameString
 				});
 				// Put the results in a div
@@ -90,7 +91,9 @@ function uploadAttachFile() {
 							}
 						},
 						error : errorHandler = function(jqXHR, textStatus, errorThrown) {
-							alert("error");
+							alert(textStatus);
+							$("#warn").text("");
+							$("#createIssueSubmitButton").removeAttr("disabled");
 						},
 						// Form data
 						data : formData,

@@ -19,24 +19,24 @@ public class DownloadAttachment extends VelocityViewServlet {
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
 	private String path;
-	private String jiraPath = "login.jsp";
-	private String os_username = "os_username";
-	private String os_password = "os_password";
-	private String os_destination = "os_destination";
-	private String destinationPath = "/secure/attachment/";
-	private String loginPath = "Login";
-	private String searchPath = "SearchIssueEvent";
+	private String jiraPath = StaticConstantVar.jiraLoginPath;
+	private String os_username = StaticConstantVar.os_username;
+	private String os_password = StaticConstantVar.os_password;
+	private String os_destination = StaticConstantVar.os_destination;
+	private String destinationPath = StaticConstantVar.destinationPath;
+	private String loginPath = StaticConstantVar.loginPath;
+	private String searchPath = StaticConstantVar.searchPath;
 	private HashMap<String, String> properties = new HashMap<String, String>();
 
-	private static String userName = "userName";
-	private static String userPassword = "userPassword";
-	private String PROPERTYNAME = "WEB-INF\\jira.conf";
+	private static String userName = StaticConstantVar.userName;
+	private static String userPassword = StaticConstantVar.userPassword;
+	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
 		Properties prop = new Properties();// 设置vm模板的装载路径
 		path = this.getServletContext().getRealPath("/");
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "GBK");
 

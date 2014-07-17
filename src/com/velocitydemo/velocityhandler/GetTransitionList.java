@@ -24,10 +24,10 @@ public class GetTransitionList extends HttpServlet {
 	private VelocityEngine velo;
 	private String path;
 	private String jirasiteUrl;
-	private static String userName = "userName";
-	private static String userPassword = "userPassword";
+	private static String userName = StaticConstantVar.userName;
+	private static String userPassword = StaticConstantVar.userPassword;
 
-	private String PROPERTYNAME = "WEB-INF\\jira.conf";
+	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 
 	@Override
@@ -37,7 +37,7 @@ public class GetTransitionList extends HttpServlet {
 		path = this.getServletContext().getRealPath("/");
 		// String path =
 		// this.getClass().getClassLoader().getResource("").getPath();
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path +  StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "UTF-8");
 

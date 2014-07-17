@@ -27,16 +27,16 @@ public class CreateIssueEvent extends VelocityViewServlet {
 	private String Project;
 	private String Username;
 	private String Password;
-	private static String userName = "userName";
-	private static String userPassword = "userPassword";
+	private static String userName = StaticConstantVar.userName;
+	private static String userPassword = StaticConstantVar.userPassword;
+	private static String userDisplayName = StaticConstantVar.userDisplayName;
+	private String[] checkPat = StaticConstantVar.checkPat;
 
-	private String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
-
-	private String PROPERTYNAME = "WEB-INF\\jira.conf";
+	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 	private static HashMap<String, String> properties = new HashMap<String, String>();
 
-	private String loginPath = "Login";
-	private String searchPath = "/SearchIssueEvent";
+	private String loginPath = StaticConstantVar.loginPath;
+	private String searchPath = StaticConstantVar.searchPath;
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity引擎对象
@@ -44,7 +44,8 @@ public class CreateIssueEvent extends VelocityViewServlet {
 		path = this.getServletContext().getRealPath("/");
 		// String path =
 		// this.getClass().getClassLoader().getResource("").getPath();
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + "temp");
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path
+				+ StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "UTF-8");
 
@@ -67,11 +68,14 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					+ properties.get("URL") + ":" + properties.get("Port")
 					+ "/";
 			this.Project = properties.get("Project");
-			//this.Username = properties.get("Username");
-			//this.Password = properties.get("Password");
-			issueInfo.setAduserName(properties.get("姓名"));
-			issueInfo.setDepartmentName(properties.get("部门"));
-			issueInfo.setInformationName(properties.get("联系电话邮件地址"));
+			// this.Username = properties.get("Username");
+			// this.Password = properties.get("Password");
+			issueInfo.setAduserName(properties.get("域用户姓名"));
+			issueInfo.setUserInputName(properties.get("姓名"));
+			issueInfo.setDepartmentName(properties.get("申请部门"));
+			issueInfo.setInformationName(properties.get("联系方式"));
+			issueInfo.setEventType(properties.get("事件类型"));
+			issueInfo.setIssuetype(properties.get("issueType"));
 			issueInfo.setJirasite(jirasiteUrl);
 			issueInfo.setProject(Project);
 		}
@@ -88,12 +92,15 @@ public class CreateIssueEvent extends VelocityViewServlet {
 		String meth = request.getMethod();
 		String aduname = null;
 		String adpassword = null;
-		
+		String displayName = null;
+
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			aduname = IsLoggedIn.getUserInfo(this, response, request, userName);
-			adpassword = IsLoggedIn.getUserInfo(this, response, request, userPassword);
-			ctx.put("aduname", aduname);
-			
+			adpassword = IsLoggedIn.getUserInfo(this, response, request,
+					userPassword);
+			displayName = IsLoggedIn.getUserInfo(this, response, request,
+					userDisplayName);
+			ctx.put("aduname", displayName);
 
 			issueInfo.setUsername(aduname);
 			issueInfo.setPassword(adpassword);
@@ -127,13 +134,16 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					: request.getParameter("department");
 			String information = request.getParameter("information").isEmpty() ? ""
 					: request.getParameter("information");
+			String userInputName = request.getParameter("userInputName").isEmpty() ? ""
+					: request.getParameter("userInputName");
+			
 			String checkString = information + department + issuetype
-					+ description + summary;
+					+ description + summary + userInputName;
 
 			// Map<String, Object> infoList = new HashMap<String, Object>();
 			if (jirasiteUrl.isEmpty() || Project.isEmpty() || summary.isEmpty()
 					|| description.isEmpty() || issuetype.isEmpty()
-					|| information.isEmpty() || department.isEmpty()) {
+					|| information.isEmpty() || department.isEmpty() || userInputName.isEmpty()) {
 				String warn = "创建失败，字段不能为空";
 				ctx.put("warn", warn);
 			} else if (!CommonUtil.checkStringValidation(checkString, checkPat)) {
@@ -144,7 +154,7 @@ public class CreateIssueEvent extends VelocityViewServlet {
 				try {
 					responseStr = issueInfo.createIssue(jirasiteUrl, Project,
 							summary, description, issuetype, aduname,
-							adpassword, information, department, aduname);
+							adpassword, information, department, displayName, userInputName);
 
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -184,7 +194,7 @@ public class CreateIssueEvent extends VelocityViewServlet {
 		// read file store
 		Vector itemlist;
 		try {
-			itemlist = issueInfo.getIssueTypes();
+			itemlist = issueInfo.getEventTypes();
 			ctx.put("itemlist", itemlist);
 		} catch (IOException e1) {
 			// TODO Auto-generated catch block
