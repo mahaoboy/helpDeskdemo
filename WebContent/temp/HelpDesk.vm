@@ -1,9 +1,6 @@
 <html>
 
-<span>#if($aduname)欢迎您登录，$aduname#end</span>
-<h1><a href="CreateIssueEvent">创建事件</a>
-<br />
-<a href="SearchIssueEvent">查询事件</a></h1>
-<br />
-<a href="GoJIRA">进入JIRA</a></h1>
+<span>#if($aduname)欢迎您登录，$aduname#end</span> &nbsp;&nbsp;&nbsp;<a href="Logout">退出</a></h1>
+<h1>&nbsp;&nbsp;&nbsp;<a href="CreateIssueEvent">创建桌面请求</a>   &nbsp;&nbsp;&nbsp;<a href="SearchIssueEvent">查询桌面请求</a>   &nbsp;&nbsp;&nbsp;<a href="GoJIRA">进入IT服务平台</a></h1>
+
 </html>

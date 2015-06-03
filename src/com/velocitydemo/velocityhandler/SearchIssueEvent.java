@@ -35,6 +35,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 	private static String EMPTY_VALUE = StaticConstantVar.EMPTY_VALUE;
 
 	private String[] checkPat = StaticConstantVar.checkPat;
+	private String[] numberCheckPat = StaticConstantVar.numberPat;
 	private String checkForDate = StaticConstantVar.checkForDate;
 
 	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
@@ -77,18 +78,22 @@ public class SearchIssueEvent extends VelocityViewServlet {
 			// this.Password = properties.get("Password");
 			this.deFaultStatusForSearch = properties.get("默认搜索事件状态");
 			this.colsedStatusForSearch = properties.get("关闭状态");
-			issueInfo.setAduserName(properties.get("域用户姓名"));
 			issueInfo.setDepartmentName(properties.get("申请部门"));
-			issueInfo.setInformationName(properties.get("联系方式"));
+			//issueInfo.setInformationName(properties.get("联系方式"));
 			issueInfo.setResolutionDetailName(properties.get("IT解决方案"));
 			issueInfo.setWorkAround(properties.get("处理方式"));
 			issueInfo.setReasonOfNotPass(properties.get("未通过原因"));
 			issueInfo.setIssuetype(properties.get("issueType"));
-			issueInfo.setEventType(properties.get("事件类型"));
+			issueInfo.setEventType(properties.get("桌面请求类型"));
+			issueInfo.setSpecificDescription(properties.get("描述"));
 			issueInfo.setJirasite(jirasiteUrl);
 			issueInfo.setProject(Project);
 			issueInfo.setCloseAction(properties.get("关闭状态"));
 			issueInfo.setReopenAction("重开动作");
+			issueInfo.setEstimateForAccomplish(properties.get("预计完成日期"));
+			issueInfo.setReallistOfAccomplish(properties.get("实际处理完成日期"));
+			issueInfo.setRank(properties.get("职级"));
+			issueInfo.setFee(properties.get("费用"));
 		}
 	}
 
@@ -132,7 +137,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 				e.printStackTrace();
 			}
 		}
-
+		ctx.put("searchResultPrefix", "");
 		ctx.put("meth", meth);
 		// System.out.println("Method:" + meth);
 
@@ -148,8 +153,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 						: request.getParameter("issuetype");
 				String department = request.getParameter("department")
 						.isEmpty() ? "" : request.getParameter("department");
-				String information = request.getParameter("information")
-						.isEmpty() ? "" : request.getParameter("information");
+				String information = "";
 
 				String createtime = request.getParameter("createtime")
 						.isEmpty() ? "" : request.getParameter("createtime");
@@ -157,18 +161,24 @@ public class SearchIssueEvent extends VelocityViewServlet {
 						.isEmpty() ? "" : request.getParameter("createtimeend");
 				String status = request.getParameter("status").isEmpty() ? ""
 						: request.getParameter("status");
-				String resolution = request.getParameter("resolution")
-						.isEmpty() ? "" : request.getParameter("resolution");
+				String resolution = "";
+				
+				String assigned = request.getParameter("assigned").isEmpty() ? ""
+						: request.getParameter("assigned");
+				
 				String resolutiondescription = request.getParameter(
 						"resolutiondescription").isEmpty() ? "" : request
 						.getParameter("resolutiondescription");
 				String reasonOfNotPass = request
 						.getParameter("reasonOfNotPass").isEmpty() ? ""
 						: request.getParameter("reasonOfNotPass");
+				
+				String rankString = request.getParameterMap().containsKey("rank") ?  request.getParameter("rank") : "" ;
+				String feeString = request.getParameterMap().containsKey("fee") ?  request.getParameter("fee") : "" ;
 
 				checkString += resolutiondescription + resolution + status
 						+ createtime + information + department + issuetype
-						+ description + summary + reasonOfNotPass;
+						+ description + summary + reasonOfNotPass + assigned + rankString + feeString;
 
 				if ((!createtime.isEmpty() && !CommonUtil.checkStringValidat(
 						createtime, checkForDate))
@@ -179,6 +189,10 @@ public class SearchIssueEvent extends VelocityViewServlet {
 						checkPat)) {
 					ctx.put("warn",
 							"输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
+				}else if (!CommonUtil.checkStringValidation(feeString,
+						numberCheckPat)) {
+					ctx.put("warn",
+							"费用字段输入字符只能是数字");
 				} else {
 					try {
 						if (aduname.equals(null)) {
@@ -203,7 +217,7 @@ public class SearchIssueEvent extends VelocityViewServlet {
 											information, createtime,
 											createtimeend, status, resolution,
 											resolutiondescription,
-											reasonOfNotPass);
+											reasonOfNotPass, assigned, feeString, rankString);
 							ctx.put("searchResultViaJQL", searchResultViaJQL);
 							ctx.put("total", issueInfo.getTotalNumber());
 						}
@@ -217,13 +231,17 @@ public class SearchIssueEvent extends VelocityViewServlet {
 				ctx.put("description", description);
 				ctx.put("issuetype", issuetype);
 				ctx.put("department", department);
-				ctx.put("information", information);
+				//ctx.put("information", information);
 				ctx.put("createtime", createtime);
 				ctx.put("createtimeend", createtimeend);
 				ctx.put("status", status);
 				ctx.put("resolution", resolution);
 				ctx.put("resolutiondescription", resolutiondescription);
 				ctx.put("reasonOfNotPass", reasonOfNotPass);
+				ctx.put("assigned", assigned);
+				ctx.put("showSearchCretiria", true);
+				ctx.put("fee", feeString);
+				ctx.put("rank", rankString);
 			} catch (NullPointerException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -271,43 +289,53 @@ public class SearchIssueEvent extends VelocityViewServlet {
 					String IssueStatus = request.getParameterMap().containsKey(
 							"IssueStatus") ? request
 							.getParameter("IssueStatus") : "";
+					String showSearchCretiria = request.getParameterMap().containsKey(
+									"showSearchCretiria") ? request
+									.getParameter("showSearchCretiria") : "";
 					Vector<Object> searchResultViaJQL;
 
 					if (IssueStatus.equals(StaticConstantVar.notClosed)) {
-						issueInfo.setExtraJQLString(" and status !="
-								+ this.colsedStatusForSearch);
+						issueInfo.setExtraJQLString(" and status != '"
+								+ this.colsedStatusForSearch + "'");
 						searchResultViaJQL = issueInfo.searchIssue(displayName,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-								EMPTY_VALUE, EMPTY_VALUE);
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE);
+						ctx.put("searchResultPrefix", "所有我提交的未关闭请求，");
 					} else if (IssueStatus.equals(StaticConstantVar.all)) {
 						issueInfo.setExtraJQLString("");
 						searchResultViaJQL = issueInfo.searchIssue(displayName,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
-								EMPTY_VALUE, EMPTY_VALUE);
-
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE);
+						ctx.put("searchResultPrefix", "所有我提交的请求，");
 					} else {
+						issueInfo.setExtraJQLString("");
 						searchResultViaJQL = issueInfo.searchIssue(displayName,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE,
 								EMPTY_VALUE, this.deFaultStatusForSearch,
-								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE);
+								EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE, EMPTY_VALUE);
+						ctx.put("searchResultPrefix", "我提交已处理完成的，需要我确认是否通过的请求，");
 					}
 					ctx.put("searchResultViaJQL", searchResultViaJQL);
+					ctx.put("showSearchCretiria", showSearchCretiria);
 					ctx.put("total", issueInfo.getTotalNumber());
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 		}
 
 		Vector issuetypes = new Vector();
 		Vector statuses = new Vector();
 		Vector resolutions = new Vector();
+		Vector departMent;
+		
 		try {
 			issuetypes = issueInfo.getEventTypes();
 			ctx.put("issuetypes", issuetypes);
@@ -315,11 +343,16 @@ public class SearchIssueEvent extends VelocityViewServlet {
 			statuses = issueInfo.getIssueStatus();
 			ctx.put("statuss", statuses);
 
-			resolutions = issueInfo.getWorkAroundTypes();
-			ctx.put("resolutions", resolutions);
-		} catch (IOException e1) {
+/*			resolutions = issueInfo.getWorkAroundTypes();
+			ctx.put("resolutions", resolutions);*/
+
+			departMent = issueInfo.getCreateMeta(issueInfo.getDepartmentName());
+			ctx.put("departmentitem", departMent);
+		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			String warn = "从JIRA获取信息失败";
+			ctx.put("warn", warn);
 		}
 
 		ctx.put("Createdissuekey", request.getAttribute("Createdissuekey"));

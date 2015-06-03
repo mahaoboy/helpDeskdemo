@@ -26,6 +26,7 @@ public class LDAPAuthentication {
 	private String rootpass;
 	private String userNameLDAPField;
 	private String userDisplayNameLDAPField;
+	public String userMailAddress;
 
 	public LDAPAuthentication(HashMap<String, String> properties) {
 		this.URL = "ldap://" + properties.get("URL") + ":"
@@ -35,6 +36,7 @@ public class LDAPAuthentication {
 		this.rootpass = properties.get("RootPassword");
 		this.userNameLDAPField = properties.get("UserNameLDAPField");
 		this.userDisplayNameLDAPField = properties.get("DisplayNameLDAPField");
+		this.userMailAddress = properties.get("MailAddress");
 	}
 
 	private void LDAP_connect() {
@@ -95,6 +97,9 @@ public class LDAPAuthentication {
 	public boolean authenricate(String UID, String password) {
 		boolean valide = false;
 		String userDN = getUserDN(UID);
+		if(userDN.isEmpty()){
+			return valide;
+		}
 
 		try {
 			ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, userDN);
@@ -109,6 +114,10 @@ public class LDAPAuthentication {
 			System.out.println(e.toString());
 			valide = false;
 		} catch (NamingException e) {
+			System.out.println(userDN + " 验证失败");
+			logger.debug(userDN + " 验证失败" , e);
+			valide = false;
+		} catch (Exception e) {
 			System.out.println(userDN + " 验证失败");
 			logger.debug(userDN + " 验证失败" , e);
 			valide = false;
@@ -148,5 +157,39 @@ public class LDAPAuthentication {
 		}
 
 		return userDisplayName;
+	}
+	
+	public String getUserAttribute(String uid, String searchField) {
+		String attrString = "";
+		LDAP_connect();
+		try {
+			SearchControls constraints = new SearchControls();
+			constraints.setSearchScope(SearchControls.SUBTREE_SCOPE);
+			NamingEnumeration<SearchResult> en = ctx.search("",
+					userNameLDAPField + "=" + uid, constraints);
+			if (en == null || !en.hasMoreElements()) {
+				System.out.println("未找到该用户");
+				logger.debug("未找到该用户");
+			}
+			// maybe more than one element
+			while (en != null && en.hasMoreElements()) {
+				Object obj = en.nextElement();
+				if (obj instanceof SearchResult) {
+					SearchResult si = (SearchResult) obj;
+					attrString = si.getAttributes().get(searchField)
+							.get().toString();
+					logger.debug("Attribute: " + attrString);
+				} else {
+					System.out.println(obj);
+					logger.debug(obj);
+				}
+			}
+		} catch (Exception e) {
+			System.out.println("查找用户时产生异常。");
+			logger.debug("查找用户时产生异常。" , e);
+			e.printStackTrace();
+		}
+
+		return attrString;
 	}
 }

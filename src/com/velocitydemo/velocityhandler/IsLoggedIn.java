@@ -15,8 +15,10 @@ public class IsLoggedIn {
 	private static String IsLoggedInString = StaticConstantVar.IsLoggedInString;
 	private static String userName = StaticConstantVar.userName;
 	private static String userPassword = StaticConstantVar.userPassword;
-	
+	private static String userJIRApass = StaticConstantVar.userJIRApass;
+
 	private static String userDisplayName = StaticConstantVar.userDisplayName;
+	private static String userMailAdd = StaticConstantVar.userMailAdd;
 	private static String SESSION_COOKIE_NAME = StaticConstantVar.SESSION_COOKIE_NAME;
 	private static String PROPERTYNAME = StaticConstantVar.LDAP_PROPERTYNAME;
 	private static String JIRA_PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
@@ -24,7 +26,7 @@ public class IsLoggedIn {
 	private static HttpServlet scontext;
 	private static String adminUserName;
 	private static String adminPassWord;
-	
+
 	private static boolean getAdminInfo() {
 		String path = scontext.getServletContext().getRealPath("/");
 		try {
@@ -67,7 +69,8 @@ public class IsLoggedIn {
 		scontext = servletContext;
 		if (!isLDAPenabled()) {
 			getAdminInfo();
-			setLogin(response, request, adminUserName, adminPassWord, adminUserName);
+			setLogin(response, request, adminUserName, adminPassWord,
+					adminUserName, adminUserName, adminPassWord);
 			return true;
 		}
 		Cookie cookies[] = request.getCookies();
@@ -96,7 +99,9 @@ public class IsLoggedIn {
 	}
 
 	public static void setLogin(HttpServletResponse response,
-			HttpServletRequest request, String userid , String inpassword, String displayNameofUser) {
+			HttpServletRequest request, String userid, String inpassword,
+			String displayNameofUser, String userMailAddress,
+			String userJIRApassString) {
 		HttpSession session = request.getSession();
 		HttpSessionCollector.sessionadded(session);
 
@@ -106,6 +111,8 @@ public class IsLoggedIn {
 			session.setAttribute(userName, userid);
 			session.setAttribute(userPassword, inpassword);
 			session.setAttribute(userDisplayName, displayNameofUser);
+			session.setAttribute(userMailAdd, userMailAddress);
+			session.setAttribute(userJIRApass, userJIRApassString);
 		}
 
 		Cookie cookies[] = request.getCookies();
@@ -135,7 +142,8 @@ public class IsLoggedIn {
 	}
 
 	public static String getUserInfo(HttpServlet servletContext,
-			HttpServletResponse response, HttpServletRequest request, String userinfo) {
+			HttpServletResponse response, HttpServletRequest request,
+			String userinfo) {
 		if (!IsLoggedIn.checkLogin(servletContext, response, request)) {
 			return "";
 		} else {
@@ -150,10 +158,19 @@ public class IsLoggedIn {
 								.getValue());
 						if (session != null && userinfo.equals(userName)) {
 							uinfo = (String) session.getAttribute(userName);
-						}else if (session != null && userinfo.equals(userPassword)){
+						} else if (session != null
+								&& userinfo.equals(userPassword)) {
 							uinfo = (String) session.getAttribute(userPassword);
-						}else if (session != null && userinfo.equals(userDisplayName)){
-							uinfo = (String) session.getAttribute(userDisplayName);
+						} else if (session != null
+								&& userinfo.equals(userDisplayName)) {
+							uinfo = (String) session
+									.getAttribute(userDisplayName);
+						} else if (session != null
+								&& userinfo.equals(userMailAdd)) {
+							uinfo = (String) session.getAttribute(userMailAdd);
+						} else if (session != null
+								&& userinfo.equals(userJIRApass)) {
+							uinfo = (String) session.getAttribute(userJIRApass);
 						}
 					}
 				}
@@ -161,5 +178,23 @@ public class IsLoggedIn {
 			return uinfo;
 		}
 
+	}
+
+	public static void logOutUser(HttpServletResponse response,
+			HttpServletRequest request) {
+
+		Cookie cookies[] = request.getCookies();
+
+		Cookie c3 = null;
+		if (cookies != null) {
+			for (int i = 0; i < cookies.length; i++) {
+				c3 = cookies[i];
+				if (c3.getName().equals(SESSION_COOKIE_NAME)) {
+					c3.setMaxAge(0);
+					break;
+				}
+			}
+		}
+		response.addCookie(c3);
 	}
 }

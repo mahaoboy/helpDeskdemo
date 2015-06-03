@@ -11,19 +11,19 @@ function createIssue() {
 				event.preventDefault();
 				var $form = $(this), url = $form.attr("action");
 				var departmentValue = $("#department").val();
-				var informationValue = $("#information").val();
+				var rankValue = $("#rank").val();
+				var feeValue = $("#fee").val();
 				var summaryValue = $("#summary").val();
 				var descriptionValue = $("#description").val();
 				var issuetypeValue = $("#issuetype").val();
-				var userInputName = $("#userInputName").val();
-				if (departmentValue == '' || informationValue == ''
+				if (departmentValue == '' 
 						|| summaryValue == '' || descriptionValue == ''
 						|| issuetypeValue == '') {
 					$("#warn").text("所有字段均不能为空");
 					return false;
 				}
 
-				var attachList = $("#attachmentList span");
+				var attachList = $("#attachmentList div span");
 				var attachNameString = "";
 				attachList.each(function(){attachNameString = attachNameString +","+ $(this).text()});
 				
@@ -32,11 +32,11 @@ function createIssue() {
 				
 				var posting = $.post(url, {
 					department : departmentValue,
-					information : informationValue,
+					rank : rankValue,
 					summary : summaryValue,
+					fee : feeValue,
 					description : descriptionValue,
 					issuetype : issuetypeValue,
-					userInputName : userInputName,
 					attachNameList: attachNameString
 				});
 				// Put the results in a div
@@ -83,7 +83,7 @@ function uploadAttachFile() {
 							} else if (data.success == "success") {
 								$("#warn").text("");
 								$("#createIssueSubmitButton").removeAttr("disabled");
-								$("#attachmentList").append("<span style='float: left;'>"+name+"</span><br />");
+								$("#attachmentList").append("<div><span style='float: left;'>"+name+"</span><a href='#' onclick='$(this).parent().remove();'>删除</a></div><br />");
 							} else{
 								alert(data.error);
 								$("#warn").text("");

@@ -26,10 +26,12 @@ public class GoJIRA extends VelocityViewServlet {
 	private String destinationPath = StaticConstantVar.destinationPathDashboard;
 	private String loginPath = StaticConstantVar.loginPath;
 	private HashMap<String, String> properties = new HashMap<String, String>();
+	private static String userDisplayName = StaticConstantVar.userDisplayName;
 
 	private static String userName = StaticConstantVar.userName;
 	private static String userPassword = StaticConstantVar.userPassword;
 	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
+	private static String userJIRApass = StaticConstantVar.userJIRApass;
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity“˝«Ê∂‘œÛ
@@ -74,15 +76,21 @@ public class GoJIRA extends VelocityViewServlet {
 		}
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
-			uname = IsLoggedIn.getUserInfo(this, response, request, userName);
+			uname = IsLoggedIn.getUserInfo(this, response, request, userDisplayName);
 			upassword = IsLoggedIn.getUserInfo(this, response, request,
-					userPassword);
+					userJIRApass);
+			
+			String destinationPathString = request.getParameterMap().containsKey("destinationPath") ? request.getParameter("destinationPath")
+					: "";
+			
 			try {
 				if (!jirasiteUrl.isEmpty()) {
-					response.sendRedirect(jirasiteUrl + jiraPath + "?"
+					String redirectUrl = jirasiteUrl + jiraPath + "?"
 							+ os_username + "=" + uname + "&" + os_password
 							+ "=" + upassword + "&" + os_destination + "="
-							+ destinationPath);
+							+ (destinationPathString.isEmpty()?destinationPath:destinationPathString);
+					System.out.println(redirectUrl + "   ccecececececececececexxxx");
+					response.sendRedirect(redirectUrl);
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block

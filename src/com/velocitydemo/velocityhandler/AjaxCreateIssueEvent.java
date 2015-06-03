@@ -29,7 +29,9 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 	private static String userName = StaticConstantVar.userName;
 	private static String userPassword = StaticConstantVar.userPassword;
 	private static String userDisplayName = StaticConstantVar.userDisplayName;
+	private static String userMailAdd = StaticConstantVar.userMailAdd;
 	private String[] checkPat = StaticConstantVar.checkPat;
+	private String[] numberCheckPat = StaticConstantVar.numberPat;
 
 	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 	private String PROPERTYNAME_FILE = StaticConstantVar.PROPERTYNAME_FILE_UPLOAD;
@@ -72,8 +74,11 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 			issueInfo.setAduserName(properties.get("域用户姓名"));
 			issueInfo.setUserInputName(properties.get("姓名"));
 			issueInfo.setDepartmentName(properties.get("申请部门"));
-			issueInfo.setInformationName(properties.get("联系方式"));
-			issueInfo.setEventType(properties.get("事件类型"));
+			//issueInfo.setInformationName(properties.get("联系方式"));
+			issueInfo.setEventType(properties.get("桌面请求类型"));
+			issueInfo.setSpecificDescription(properties.get("描述"));
+			issueInfo.setRank(properties.get("职级"));
+			issueInfo.setFee(properties.get("费用"));
 			issueInfo.setIssuetype(properties.get("issueType"));
 			issueInfo.setJirasite(jirasiteUrl);
 			issueInfo.setProject(Project);
@@ -99,6 +104,7 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 		String aduname = null;
 		String adpassword = null;
 		String displayName = null;
+		String mailAdd = null; 
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			aduname = IsLoggedIn.getUserInfo(this, response, request, userName);
@@ -106,6 +112,8 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 					userPassword);
 			displayName = IsLoggedIn.getUserInfo(this, response, request,
 					userDisplayName);
+			mailAdd = IsLoggedIn.getUserInfo(this, response, request,
+					userMailAdd);
 			ctx.put("aduname", displayName);
 
 			issueInfo.setUsername(aduname);
@@ -127,19 +135,17 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 						: request.getParameter("issuetype");
 				String department = request.getParameter("department")
 						.isEmpty() ? "" : request.getParameter("department");
-				String information = request.getParameter("information")
-						.isEmpty() ? "" : request.getParameter("information");
-				String userInputName = request.getParameter("userInputName").isEmpty() ? ""
-						: request.getParameter("userInputName");
-				
+				String information = mailAdd;
+				String rankString = request.getParameterMap().containsKey("rank") ?  request.getParameter("rank") : "" ;
+				String feeString = request.getParameterMap().containsKey("fee") ?  request.getParameter("fee") : "" ;
 				String checkString = information + department + issuetype
-						+ description + summary + userInputName;
+						+ description + summary + rankString + feeString;
 
 				// Map<String, Object> infoList = new HashMap<String, Object>();
 				if (jirasiteUrl.isEmpty() || Project.isEmpty()
 						|| summary.isEmpty() || description.isEmpty()
 						|| issuetype.isEmpty() || information.isEmpty()
-						|| department.isEmpty() || userInputName.isEmpty()) {
+						|| department.isEmpty() || feeString.isEmpty() || rankString.isEmpty()) {
 					String warn = "创建失败，字段不能为空";
 					ctx.put("warn", warn);
 					return nulltemplate;
@@ -148,13 +154,18 @@ public class AjaxCreateIssueEvent extends VelocityViewServlet {
 					ctx.put("warn",
 							"输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
 					return nulltemplate;
-				} else {
+				} else if (!CommonUtil.checkStringValidation(feeString,
+						numberCheckPat)) {
+					ctx.put("warn",
+							"费用字段输入字符只能是数字");
+					return nulltemplate;
+				}else {
 					String responseStr = "";
 					try {
 						responseStr = issueInfo.createIssue(jirasiteUrl,
 								Project, summary, description, issuetype,
 								aduname, adpassword, information, department,
-								displayName, userInputName);
+								displayName, feeString, rankString);
 
 					} catch (Exception e) {
 						// TODO Auto-generated catch block

@@ -106,8 +106,11 @@ public class Login extends VelocityViewServlet {
 			} else {
 				if (ldapc.authenricate(inusername, inpassword)) {
 					String displayNameofUser = ldapc.getUserDisplayName(inusername);
+					String userMailAddress = ldapc.getUserAttribute(inusername, ldapc.userMailAddress);
 					if(issueInfo.checkUserExistedOrNot(inusername, inpassword)){
-						IsLoggedIn.setLogin(response, request, inusername, inpassword, displayNameofUser);
+						//IsLoggedIn.setLogin(response, request, inusername, inpassword, displayNameofUser, userMailAddress);
+						IsLoggedIn.setLogin(response, request, adminUsername, adminPassword, inusername, userMailAddress, inpassword);
+						
 						ctx.put("meth", inusername);
 						try {
 							response.sendRedirect(HelpDeskPath);

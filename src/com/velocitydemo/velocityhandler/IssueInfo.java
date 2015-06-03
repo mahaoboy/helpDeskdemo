@@ -34,6 +34,7 @@ import org.apache.http.entity.mime.content.ContentBody;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.CharsetUtils;
 
 import sun.misc.BASE64Encoder;
 
@@ -116,7 +117,83 @@ public class IssueInfo {
 	private String eventTypeName;
 	private String workAroundName;
 	private String reasonOfNotPassName;
+	public String getFeeName() {
+		return feeName;
+	}
+
+	public void setFeeName(String feeName) {
+		this.feeName = feeName;
+	}
+
+	public String getRankName() {
+		return rankName;
+	}
+
+	public void setRankName(String rankName) {
+		this.rankName = rankName;
+	}
+
 	private String extraJQLString = "";
+	private String specificDescription;
+	private String specificDescriptionName;
+	private String feeName;
+	private String rankName;
+	
+	private String feeValue;
+	public String getFeeValue() {
+		return feeValue;
+	}
+
+	public void setFeeValue(String feeValue) {
+		this.feeValue = feeValue;
+	}
+
+	public String getRankValue() {
+		return rankValue;
+	}
+
+	public void setRankValue(String rankValue) {
+		this.rankValue = rankValue;
+	}
+
+	private String rankValue;
+	private String fee;
+	public String getFee() {
+		return fee;
+	}
+
+	public void setFee(String fee) {
+		this.fee = fee;
+	}
+
+	public String getRank() {
+		return rank;
+	}
+
+	public void setRank(String rank) {
+		this.rank = rank;
+	}
+
+	private String rank;
+
+	public String getEstimateForAccomplish() {
+		return estimateForAccomplish;
+	}
+
+	public void setEstimateForAccomplish(String estimateForAccomplish) {
+		this.estimateForAccomplish = estimateForAccomplish;
+	}
+
+	public String getReallistOfAccomplish() {
+		return reallistOfAccomplish;
+	}
+
+	public void setReallistOfAccomplish(String reallistOfAccomplish) {
+		this.reallistOfAccomplish = reallistOfAccomplish;
+	}
+
+	private String estimateForAccomplish;
+	private String reallistOfAccomplish;
 
 	public String getExtraJQLString() {
 		return extraJQLString;
@@ -301,22 +378,24 @@ public class IssueInfo {
 		JSONObject projectj = new JSONObject();
 		JSONObject issuetypej = new JSONObject();
 		JSONObject issueeventj = new JSONObject();
+		JSONObject departmentJ = new JSONObject();
+		JSONObject reporterJ = new JSONObject();
 
 		issuetypej.put("name", issuetype);
+		reporterJ.put("name", this.aduser);
 		projectj.put("key", project);
 		issueeventj.put("value", eventTypeValue);
+		departmentJ.put("value", department);
 
 		fieldsj.put("summary", summary);
 		fieldsj.put("issuetype", issuetypej);
 		fieldsj.put("project", projectj);
-		fieldsj.put("description", description);
-		if (this.aduserName != null) {
-			fieldsj.put(this.aduserName, this.aduser);
-			fieldsj.put(this.departmentName, this.department);
-			fieldsj.put(this.informationName, this.information);
-			fieldsj.put(this.userInputName, this.userInputNameValue);
-			fieldsj.put(this.eventType, issueeventj);
-		}
+		fieldsj.put(this.specificDescription, description);
+		fieldsj.put(this.departmentName, departmentJ);
+		fieldsj.put(this.eventType, issueeventj);
+		fieldsj.put(this.fee, Double.valueOf(this.feeValue));
+		fieldsj.put(this.rank, this.rankValue);
+		fieldsj.put("reporter", reporterJ);
 		outJson.put("fields", fieldsj);
 
 		return outJson.toString();
@@ -367,7 +446,7 @@ public class IssueInfo {
 	public String createIssue(String jirasite, String project, String summary,
 			String description, String eventTypeValue, String username,
 			String password, String information, String department,
-			String aduname, String userInputNameValue) throws Exception {
+			String aduname, String feeString, String rankString) throws Exception {
 
 		this.jirasite = jirasite;
 		this.project = project;
@@ -379,7 +458,8 @@ public class IssueInfo {
 		this.information = information;
 		this.department = department;
 		this.aduser = aduname;
-		this.userInputNameValue = userInputNameValue;
+		this.feeValue = feeString;
+		this.rankValue = rankString;
 
 		jsonStr = createJson();
 		System.out.println("jsonStr:---: " + jsonStr);
@@ -453,6 +533,10 @@ public class IssueInfo {
 			System.out.println("\n fixversions: " + fixversionS);
 		}
 
+		String reasonDetailString =  fieldsJ.get(this.reasonOfNotPass)
+				 == null ? "" : fieldsJ.get(this.reasonOfNotPass)
+				.toString();
+		issueinfo.put("reasonDetailString", reasonDetailString);
 		issueinfo.put("assignee", displayNameJ);
 		issueinfo.put("status", statusNameJ);
 		issueinfo.put("fixVersions", fixversionS);
@@ -682,6 +766,8 @@ public class IssueInfo {
 		// add reuqest header
 		con.setRequestMethod("GET");
 		con.setRequestProperty("User-Agent", "Mozilla/5.0");
+		con.setRequestProperty("Content-Type",
+				"application/json; charset=UTF-8");
 
 		BASE64Encoder base64Encoder = new BASE64Encoder();
 		String authStr = username + ":" + password;
@@ -833,6 +919,47 @@ public class IssueInfo {
 		return issueTypeN;
 	}
 
+	public Vector<Object> getCreateMeta(String metaName) throws IOException {
+
+		String url = getSiteLink("rest/api/2/issue/createmeta?projectKeys="
+				+ project + "&expand=projects.issuetypes.fields");
+
+		StringBuffer response = getConnectionToJira(url);
+
+		System.out.println("Response String : " + response.toString());
+		JSONObject jsonObject = JSONObject.fromObject(response.toString());
+
+		Vector<Object> issueTypeN = new Vector<Object>();
+		Object[] issueTypesJ = JSONArray.fromObject(
+				JSONObject.fromObject(
+						JSONArray.fromObject(jsonObject.get("projects")).get(0)
+								.toString()).get("issuetypes")).toArray();
+		JSONObject issueTypeJI;
+		for (int i = 0; i < issueTypesJ.length; i++) {
+
+			issueTypeJI = JSONObject.fromObject(issueTypesJ[i]);
+			String nameI = issueTypeJI.get("name").toString();
+			Boolean subtaksOrNot = (Boolean) issueTypeJI.get("subtask");
+			if (!nameI.isEmpty() && !subtaksOrNot && nameI.equals(issuetype)) {
+				JSONObject issueTypeFields = JSONObject.fromObject(issueTypeJI
+						.get("fields").toString());
+				JSONObject eventTypeField = JSONObject
+						.fromObject(issueTypeFields.get(metaName).toString());
+				Object[] createMetaFieldsOptions = JSONArray.fromObject(
+						eventTypeField.get("allowedValues").toString())
+						.toArray();
+				for (int j = 0; j < createMetaFieldsOptions.length; j++) {
+					String option = JSONObject
+							.fromObject(createMetaFieldsOptions[j])
+							.get("value").toString();
+					issueTypeN.add(option);
+				}
+			}
+		}
+
+		return issueTypeN;
+	}
+
 	public Vector<Object> getIssueStatus() throws IOException {
 
 		String url = getSiteLink("rest/api/2/project/" + project + "/statuses");
@@ -915,6 +1042,15 @@ public class IssueInfo {
 			} else if (fieldNameJI.get("id").toString()
 					.equals(this.reasonOfNotPass)) {
 				this.reasonOfNotPassName = fieldNameJI.get("name").toString();
+			} else if (fieldNameJI.get("id").toString()
+					.equals(this.specificDescription)) {
+				this.specificDescriptionName = fieldNameJI.get("name").toString();
+			}else if (fieldNameJI.get("id").toString()
+					.equals(this.fee)) {
+				this.feeName = fieldNameJI.get("name").toString();
+			}else if (fieldNameJI.get("id").toString()
+					.equals(this.rank)) {
+				this.rankName = fieldNameJI.get("name").toString();
 			}
 		}
 	}
@@ -923,7 +1059,7 @@ public class IssueInfo {
 			String description, String eventtype, String department,
 			String information, String createtime, String createtimeend,
 			String status, String workaround, String resolutiondescription,
-			String reasonOfNotPassString) {
+			String reasonOfNotPassString, String assigned, String feeString, String rankString) {
 		JSONObject outJson = new JSONObject();
 		JSONArray fieldsj = new JSONArray();
 
@@ -934,21 +1070,31 @@ public class IssueInfo {
 		String jql = "project = " + this.project;
 
 		if (!uname.isEmpty()) {
-			jql += " and '" + this.aduser + "'" + " ~ " + "'" + uname + "'";
+			jql += " and  reporter " + " = " + "'" + uname + "'";
 		}
 		if (!summary.isEmpty()) {
 			jql += " and summary ~ " + "'" + summary + "'";
 		}
 		if (!description.isEmpty()) {
-			jql += " and description ~ " + "'" + description + "'";
+			jql += " and '"+this.specificDescriptionName+"' ~ " + "'" + description + "'";
 		}
 		if (!issuetype.isEmpty()) {
-			jql += " and issuetype = '" + issuetype+ "'";
+			jql += " and issuetype = '" + issuetype + "'";
 		}
 		if (!department.isEmpty()) {
-			jql += " and '" + this.department + "'" + " ~ " + "'" + department
+			jql += " and '" + this.department + "'" + " = " + "'" + department
 					+ "'";
 		}
+		
+		if (!feeString.isEmpty()) {
+			jql += " and '" + this.feeName + "'" + " = " + feeString;
+		}
+		
+		if (!rankString.isEmpty()) {
+			jql += " and '" + this.rankName + "'" + " ~ " + "'" + rankString
+					+ "'";
+		}
+		
 		if (!information.isEmpty()) {
 			jql += " and '" + this.information + "'" + " ~ " + "'"
 					+ information + "'";
@@ -963,17 +1109,24 @@ public class IssueInfo {
 					+ reasonOfNotPassString + "'";
 		}
 		if (!eventtype.isEmpty()) {
-			jql += " and '" + this.eventTypeName + "'" + " = " + "'" +eventtype+ "'";
+			jql += " and '" + this.eventTypeName + "'" + " = " + "'"
+					+ eventtype + "'";
 		}
 		if (!status.isEmpty()) {
-			jql += " and status = " + status;
+			jql += " and status = '" + status + "'";
 		}
-/*		if (!resolution.isEmpty()) {
-			jql += " and resolution = " + resolution;
-		}*/
-		
+
+		if (!assigned.isEmpty()) {
+			jql += " and assignee = '" + assigned + "'";
+		}
+		/*
+		 * if (!resolution.isEmpty()) { jql += " and resolution = " +
+		 * resolution; }
+		 */
+
 		if (!workaround.isEmpty()) {
-			jql += " and '" + this.workAroundName + "'"+ " = '" +workaround+ "'";
+			jql += " and '" + this.workAroundName + "'" + " = '" + workaround
+					+ "'";
 		}
 
 		if (!createtime.isEmpty()) {
@@ -983,7 +1136,7 @@ public class IssueInfo {
 		if (!createtimeend.isEmpty()) {
 			jql += " and createdDate <= " + createtimeend;
 		}
-		if(!this.extraJQLString.isEmpty()){
+		if (!this.extraJQLString.isEmpty()) {
 			jql += extraJQLString;
 		}
 		outJson.put("jql", jql);
@@ -996,13 +1149,17 @@ public class IssueInfo {
 		fieldsj.add("resolution");
 		fieldsj.add("attachment");
 		fieldsj.add("assignee");
-		fieldsj.add(this.aduserName);
 		fieldsj.add(this.departmentName);
-		fieldsj.add(this.informationName);
+		// fieldsj.add(this.informationName);
 		fieldsj.add(this.resolutionDetailName);
 		fieldsj.add(this.eventType);
 		fieldsj.add(this.workAround);
 		fieldsj.add(this.reasonOfNotPass);
+		fieldsj.add(this.specificDescription);
+		fieldsj.add(this.estimateForAccomplish);
+		fieldsj.add(this.reallistOfAccomplish);
+		fieldsj.add(this.fee);
+		fieldsj.add(this.rank);
 		outJson.put("fields", fieldsj);
 		outJson.put("maxResults", maxResults);
 		return outJson.toString();
@@ -1011,8 +1168,8 @@ public class IssueInfo {
 	public Vector<Object> searchIssue(String uname, String summary,
 			String description, String eventType, String department,
 			String information, String createtime, String createtimeend,
-			String status, String resolution, String resolutiondescription, String reasonOfNotPassString )
-			throws Exception {
+			String status, String resolution, String resolutiondescription,
+			String reasonOfNotPassString, String assigned, String feeString, String rankString) throws Exception {
 
 		String url = jirasite + "rest/api/2/search";
 
@@ -1021,7 +1178,8 @@ public class IssueInfo {
 		getFieldName();
 		String urlParameters = createJqlJson(uname, summary, description,
 				eventType, department, information, createtime, createtimeend,
-				status, resolution, resolutiondescription, reasonOfNotPassString);
+				status, resolution, resolutiondescription,
+				reasonOfNotPassString, assigned, feeString, rankString);
 
 		// Send post request
 		con.setDoOutput(true);
@@ -1085,51 +1243,79 @@ public class IssueInfo {
 				issueInfolist.put(
 						"assigneeitem",
 						fields.get("assignee").equals(null) ? "" : JSONObject
-								.fromObject(fields.get("assignee")).get("displayName")
-								.toString());
-				issueInfolist.put("descriptionitem", fields.get("description")
-						.equals(null) ? "" : fields.get("description")
+								.fromObject(fields.get("assignee"))
+								.get("displayName").toString());
+				issueInfolist.put("descriptionitem", fields.get(this.specificDescription)
+						.equals(null) ? "" : fields.get(this.specificDescription)
 						.toString());
 				issueInfolist.put("statusitem",
 						fields.get("status").equals(null) ? "" : JSONObject
 								.fromObject(fields.get("status")).get("name")
 								.toString());
-				
+
 				issueInfolist.put(
 						"createditem",
 						fields.get("created").equals(null) ? "" : CommonUtil
 								.formatDateFromString(fields.get("created")
 										.toString(), "yyyy-MM-dd'T'hh:mm:ss",
 										"yyyy-MM-dd hh:mm:ss"));
+
+				issueInfolist
+						.put("departmentitem",
+								fields.get(this.departmentName).equals(null) ? ""
+										: JSONObject
+												.fromObject(
+														fields.get(this.departmentName))
+												.get("value").toString());
+				System.out.print("this.fee: "+this.fee);
 				
-				issueInfolist.put("unameitem", fields.get(this.aduserName)
-						.equals(null) ? "" : fields.get(this.aduserName)
-						.toString());
-				issueInfolist.put("departmentitem",
-						fields.get(this.departmentName).equals(null) ? ""
-								: fields.get(this.departmentName).toString());
-				issueInfolist.put("informationitem",
-						fields.get(this.informationName).equals(null) ? ""
-								: fields.get(this.informationName).toString());
+				issueInfolist
+				.put("feeitem",
+						fields.get(this.fee).equals(null) ? ""
+								: fields.get(this.fee).toString());
+				
+				issueInfolist
+				.put("rankitem",
+						fields.get(this.rank).equals(null) ? ""
+								: fields.get(this.rank).toString());
+				/*
+				 * issueInfolist.put("informationitem",
+				 * fields.get(this.informationName).equals(null) ? "" :
+				 * fields.get(this.informationName).toString());
+				 */
 				issueInfolist.put("resolutiondescriptionitem",
 						fields.get(this.resolutionDetailName).equals(null) ? ""
 								: fields.get(this.resolutionDetailName)
 										.toString());
-				System.out.println(fields.get(this.eventType));
-				issueInfolist.put("issuetypeitem",
-						fields.get(this.eventType).equals(null) ? "" : JSONObject
-								.fromObject(fields.get(this.eventType))
-								.get("value").toString());
-				issueInfolist.put(
-						"resolutionitem",
-						fields.get(this.workAround).equals(null) ? "" : JSONObject
-								.fromObject(fields.get(this.workAround))
-								.get("value").toString());
-				issueInfolist.put(
-						"reasonOfNotPassitem",
-						fields.get(this.reasonOfNotPass).equals(null) ? "" : fields.get(this.reasonOfNotPass)
-								.toString());
+				issueInfolist
+						.put("estimateTimeofFinish",
+								fields.get(this.estimateForAccomplish).equals(
+										null) ? "" : fields.get(
+										this.estimateForAccomplish).toString());
 				
+				
+				issueInfolist.put("reallistFinishTime",
+						fields.get(this.reallistOfAccomplish) == null ? ""
+								: fields.get(this.reallistOfAccomplish)
+										.toString());
+				System.out.println(fields.get(this.eventType));
+				issueInfolist.put(
+						"issuetypeitem",
+						fields.get(this.eventType).equals(null) ? ""
+								: JSONObject
+										.fromObject(fields.get(this.eventType))
+										.get("value").toString());
+				issueInfolist
+						.put("resolutionitem",
+								fields.get(this.workAround).equals(null) ? ""
+										: JSONObject
+												.fromObject(
+														fields.get(this.workAround))
+												.get("value").toString());
+				issueInfolist.put("reasonOfNotPassitem",
+						fields.get(this.reasonOfNotPass).equals(null) ? ""
+								: fields.get(this.reasonOfNotPass).toString());
+
 				if (!JSONArray.fromObject(fields.get("attachment")).isEmpty()) {
 					Vector<Object> attachmentItem = new Vector<Object>();
 					System.out.println(fields.get("attachment"));
@@ -1137,7 +1323,7 @@ public class IssueInfo {
 							fields.get("attachment")).toArray();
 					for (int js = 0; js < attachmentJS.length; js++) {
 						HashMap<String, String> attachmentList = new HashMap<String, String>();
-System.out.println(attachmentJS[js].toString());
+						System.out.println(attachmentJS[js].toString());
 						JSONObject jsItem = JSONObject
 								.fromObject(attachmentJS[js]);
 						if (!jsItem.isNullObject()) {
@@ -1189,7 +1375,7 @@ System.out.println(attachmentJS[js].toString());
 	}
 
 	public boolean checkUserExistedOrNot(String username, String inpassword) {
-		this.setUsername(username);
+		/*this.setUsername(username);
 		this.setPassword(inpassword);
 		System.out.println(username);
 		String url = getSiteLink("rest/api/2/user?username=" + username);
@@ -1217,13 +1403,13 @@ System.out.println(attachmentJS[js].toString());
 			return false;
 		}
 
-		System.out.println("Response String : " + response.toString());
+		System.out.println("Response String : " + response.toString());*/
 
-		return false;
+		return true;
 	}
 
-	public boolean transitionIssue(String issueKey, String transitionId)
-			throws Exception {
+	public boolean transitionIssue(String issueKey, String transitionId,
+			String reasonDetail) throws Exception {
 		String url = getSiteLink("rest/api/2/issue/" + issueKey
 				+ "/transitions");
 		String errorJ = "";
@@ -1231,10 +1417,14 @@ System.out.println(attachmentJS[js].toString());
 		System.out.println(con.getRequestMethod());
 		JSONObject transitionJson = new JSONObject();
 		JSONObject transitionIdjson = new JSONObject();
-
 		transitionIdjson.put("id", transitionId);
-		transitionJson.put("transition", transitionIdjson);
 
+		if (!reasonDetail.isEmpty()) {
+			JSONObject fieldsjson = new JSONObject();
+			fieldsjson.put(this.reasonOfNotPass, reasonDetail);
+			transitionJson.put("fields", fieldsjson);
+		}
+		transitionJson.put("transition", transitionIdjson);
 		String urlParameters = transitionJson.toString();
 
 		// Send post request
@@ -1309,7 +1499,9 @@ System.out.println(attachmentJS[js].toString());
 		File fileToUpload = new File(fullfilename);
 		FileBody fileBody = new FileBody(fileToUpload);
 		HttpEntity entity = MultipartEntityBuilder.create()
-				.addPart("file", fileBody).build();
+				.setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+				.addPart("file", fileBody)
+				.setCharset(CharsetUtils.get("UTF-8")).build();
 
 		httppost.setEntity(entity);
 		String mess = "executing request " + httppost.getRequestLine();
@@ -1344,5 +1536,21 @@ System.out.println(attachmentJS[js].toString());
 			return false;
 		}
 
+	}
+
+	public String getSpecificDescription() {
+		return specificDescription;
+	}
+
+	public void setSpecificDescription(String specificDescription) {
+		this.specificDescription = specificDescription;
+	}
+
+	public String getSpecificDescriptionName() {
+		return specificDescriptionName;
+	}
+
+	public void setSpecificDescriptionName(String specificDescriptionName) {
+		this.specificDescriptionName = specificDescriptionName;
 	}
 }

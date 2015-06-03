@@ -11,7 +11,9 @@ public class StaticConstantVar {
 	public static String userName = "userName";
 	public static String userPassword = "userPassword";
 	public static String userDisplayName = "userDisplayName";
+	public static String userMailAdd = "userMailAdd";
 	public static String[] checkPat = { "=", "\"", "'", "\\\\", "/" };
+	public static String[] numberPat = {"[^.0-9]"};
 	public static String PROPERTYNAME_FILE_UPLOAD = "temp" + File.separator
 			+ "upload" + File.separator;
 	public static String UPLOADFILE = "UPLOADFILE";
@@ -36,4 +38,5 @@ public class StaticConstantVar {
 	public static String EMPTY_VALUE = "";
 	public static String notClosed = "notClosed";
 	public static String all = "all";
+	public static String userJIRApass = "userJIRApass";
 }

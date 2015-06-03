@@ -8,45 +8,78 @@
 		#warn, .warn{font-size:20px; font-weight:bold; color:red;}
 		#title{font-size:25px; font-weight:bold; }
 		</style>
+		
+<script src="http://code.jquery.com/jquery-1.9.1.js"></script>
+<script src="http://code.jquery.com/ui/1.10.2/jquery-ui.js"></script>
+<link rel="stylesheet" href="http://code.jquery.com/ui/1.10.3/themes/smoothness/jquery-ui.css" />
 	<script type="text/javascript">
 		
-		#include("js\\jquery-1.10.2.min.js")
 		
-		#include("js\\loadTransition.js")
+		#include("js/loadTransition.js")
 		</script>
   </head>
   <body>
   #parse("HelpDesk.vm")
+  
 	<center>
+<div style="float: left; clear: both; width: 100%;">
+<a href="SearchIssueEvent?IssueStatus=notClosed" style="float: left;  margin-right:20px">所有我提交未关闭的</a>
+<a href="SearchIssueEvent?IssueStatus=all"  style="float: left;  margin-left:20px">所有我提交的</a>
+<a href="SearchIssueEvent?showSearchCretiria=true"  style="float: left;  margin-left:20px">自定义搜索条件</a>
+</div>
+	
+
+<div id="dialog-form">
+    <form>
+        <input type="hidden" id="href" name="href" />
+        <textarea rows="9" cols="38" name="comment" id="txt2" class="text ui-widget-content ui-corner-all">Enter text here...</textarea>
+    </form>
+</div>
 	
 	
-    <Span id="warn">#if($Createdissuekey)新事件创建完成：$Createdissuekey#end</span>
     <Span id="warn">#if($warn)$warn#end</span>
     <div id="bodycontent" >
      <div style="float: left; ">
-    <Span id="title" style="float: left; margin-left: 200px">搜索事件</span>
+    
+    #if($showSearchCretiria == true)
+    <Span id="title" style="float: left; margin:20px 0 0 200px">自定义搜索</span>
     <form id="admin" class="aui" method="post" action="SearchIssueEvent">
-        
+
+        #if($departmentitem)
+         <div class="field-group">
+             <label for="content">部门:</label>
+			 <select name="department">
+			 	<option value="" #if(!$department) selected="selected" #end ></option>
+					#foreach ($content1 in $departmentitem)
+                  <option value="$content1" #if($department&&$department==$content1) selected="selected" #end >$content1</option>
+                  #end
+                  </select>
+          </div>
+        #end
 
         <div class="field-group">
-             <label for="content">申请部门:</label>
-             <input type="text" id="department" name="department" class="text" value="#if($department)$department#end">
-        </div>
-        <div class="field-group">
-             <label for="content">联系方式:</label>
-             <input type="text" id="information" name="information" class="text" value="#if($information)$information#end">
-        </div>
-        <div class="field-group">
-             <label for="content">事件主题:</label>
+             <label for="content">主题:</label>
              <input type="text" id="summary" name="summary" class="text" value="#if($summary)$summary#end">
         </div>
+        
+       <div class="field-group">
+             <label for="content">职级:</label>
+             <input type="text" id="rank" name="rank" class="text" value="#if($rank)$rank#end">
+        </div>
+        
+        <div class="field-group">
+             <label for="content">费用:</label>
+             <input type="text" id="fee" name="fee" class="text" value="#if($fee)$fee#end">
+        </div>
+        
+        
 		<div class="field-group">
-             <label for="content">事件描述:</label>
+             <label for="content">桌面变更请求原因及内容详细描述:</label>
              <input type="text" id="description" name="description" class="text" value="#if($description)$description#end">
         </div>
 		#if($issuetypes)
          <div class="field-group">
-             <label for="content">事件类型:</label>
+             <label for="content">桌面请求类型:</label>
 			 <select name="issuetype">
 			 <option value="" #if(!$issuetype) selected="selected" #end ></option>
 					#foreach ($content in $issuetypes)
@@ -57,22 +90,29 @@
        #end
        
        <div class="field-group">
-             <label for="content">事件提交时间范围(yyyy-mm-dd):</label>
+             <label for="content">提交时间范围(yyyy-mm-dd):</label>
              <br />搜索起始时间：<input type="text" id="createtime" name="createtime" class="text" value="#if($createtime)$createtime#end">
             <br /> 搜索结束时间：<input type="text" id="createtimeend" name="createtimeend" class="text" value="#if($createtimeend)$createtimeend#end">
         </div>
  
- 		#if($statuss)
-         <div class="field-group">
-             <label for="content">处理状态:</label>
-			 <select name="status">
-			 <option value="" #if(!$status) selected="selected" #end ></option>
-					#foreach ($content in $statuss)
-                  <option value="$content" #if($status&&$status==$content) selected="selected" #end >$content</option>
-                  #end
-                  </select>
-          </div>
+	 #if($statuss)
+	         <div class="field-group">
+	             <label for="content">处理状态:</label>
+	                         <select name="status">
+	                         <option value="" #if(!$status) selected="selected" #end ></option
+	>
+	                                        #foreach ($content in $statuss)
+	                  <option value="$content" #if($status&&$status==$content) selected="selec
+	ted" #end >$content</option>
+	                  #end
+	                  </select>
+	          </div>
        #end
+ 
+ 		<div class="field-group">
+             <label for="content">经办人:</label>
+             <input type="text" id="assigned" name="assigned" class="text" value="#if($assigned)$assigned#end">
+        </div>
        
        #if($resolutions)
          <div class="field-group">
@@ -99,53 +139,72 @@
              <input type="submit" style="width:100px; margin-left:200px;" value="提交搜索" class="button">
         </div>
     </form>
+    #end
 </div>
 
-<div style="float: left; clear: both; width: 100%;">
-<a href="SearchIssueEvent?IssueStatus=notClosed" style="float: left;  margin-right:20px">所有我提交未关闭的事件</a>
-<a href="SearchIssueEvent?IssueStatus=all"  style="float: left;  margin-left:20px">所有我提交的事件</a>
-</div>
-    #if($searchResultViaJQL)
+
+    
     <div style="float: left; clear: both; width: 100%;">
-		<Span id="title">事件搜索结果: 一共$total个结果</span>
+		<Span id="title">搜索结果: $searchResultPrefix 总计$total个</span>
 		
-    <table width="100%" cellpadding="5" cellspacing="1" bordercolor="#333333">
-            <tr><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">姓名</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">申请部门</td>
-            <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">联系方式</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件类型</td>
-            <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件描述</td><td bgcolor="#eeeeee" align="center" style="font-weight:bold;">事件提交时间</td>
-            <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">经办人</td>
-            <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理状态</td> <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">处理方式</td>
-             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">IT解决方案</td>
-             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">未通过原因</td>
-             <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">附件</td>
-              <td bgcolor="#eeeeee" align="center" style="font-weight:bold;">操作</td>
+    <table width="1500" cellpadding="5" cellspacing="1" bordercolor="#333333">
+            <tr><td bgcolor="#6666FF" align="center" style="font-weight:bold;">主题</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">关键字</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">姓名</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">部门</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">桌面请求类型</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">桌面变更请求原因及内容详细描述</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">经办人</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">处理状态</td> 
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">操作</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">创建时间</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">预计完成日期</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">实际处理完成日期</td>
+            <td bgcolor="#6666FF" align="center" style="font-weight:bold;">处理方式</td>
+             <td bgcolor="#6666FF" align="center" style="font-weight:bold;">IT解决方案</td>
+             <td bgcolor="#6666FF" align="center" style="font-weight:bold;">未通过原因</td>
+              <td bgcolor="#6666FF" align="center" style="font-weight:bold;">职级</td>
+              <td bgcolor="#6666FF" align="center" style="font-weight:bold;">费用</td>
+             <td bgcolor="#6666FF" align="center" style="font-weight:bold;">附件</td>
             </tr>
+            
+            #if($total != 0)
             #foreach ($content in $searchResultViaJQL)
             <tr>
-						<td bgcolor="#6666FF" align="center">$content.get("unameitem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("departmentitem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("informationitem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("issuetypeitem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("descriptionitem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("createditem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("assigneeitem")</td>
-						<td bgcolor="#6666FF" align="center" id='status$content.get("issuekey")'>$content.get("statusitem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("resolutionitem")</td>
+						<td bgcolor="#dddddd" align="center">$content.get("summaryitem")</td>
+						<td bgcolor="#dddddd" align="center"><a href='GoJIRA?destinationPath=/browse/$content.get("issuekey")' target="_blank">$content.get("issuekey")</a></td>
+						<td bgcolor="#dddddd" align="center">$aduname</td>
+						<td bgcolor="#dddddd" align="center">$content.get("departmentitem")</td>
+						<td bgcolor="#dddddd" align="center">$content.get("issuetypeitem")</td>
+						<td bgcolor="#dddddd" align="center">$content.get("descriptionitem")</td>
 						
-						<td bgcolor="#6666FF" align="center">$content.get("resolutiondescriptionitem")</td>
-						<td bgcolor="#6666FF" align="center">$content.get("reasonOfNotPassitem")</td>
-						<td bgcolor="#6666FF" align="center">
+						<td bgcolor="#dddddd" align="center">$content.get("assigneeitem")</td>
+						<td bgcolor="#dddddd" align="center" id='status$content.get("issuekey")'>$content.get("statusitem")</td>
+						<td bgcolor="#dddddd" align="center"><div class="transition_functions" id='$content.get("issuekey")'><a href="" style="display:none;" class="closeInfoList"><input type="button" value="通过" style="width:50px"/></a> <a href="" style="display:none;"  class="reopenInfoList"><input type="button" value="不通过"  style="width:50px"/></a></div></td>
+						<td bgcolor="#dddddd" align="center">$content.get("createditem")</td>
+						<td bgcolor="#dddddd" align="center">$content.get("estimateTimeofFinish")</td>
+						<td bgcolor="#dddddd" align="center">$content.get("reallistFinishTime")</td>
+						
+						<td bgcolor="#dddddd" align="center">$content.get("resolutionitem")</td>
+
+						
+						<td bgcolor="#dddddd" align="center">$content.get("resolutiondescriptionitem")</td>
+						<td bgcolor="#dddddd" align="center" id='reason$content.get("issuekey")'>$content.get("reasonOfNotPassitem")</td>
+						<td bgcolor="#dddddd" align="center">$content.get("rankitem")</td>
+						<td bgcolor="#dddddd" align="center">$content.get("feeitem")</td>
+						<td bgcolor="#dddddd" align="center">
 						#if($content.get("attachmentItem"))
 						#foreach ($attachmentItem in $content.get("attachmentItem"))
 							<a href='DownloadAttachment?id=$attachmentItem.get("attachmentId")&name=$attachmentItem.get("attachmentName")'>$attachmentItem.get("attachmentName")</a><br />
 						#end
 						#end
 						</td>
-						<td bgcolor="#6666FF" align="center"><div class="transition_functions" id='$content.get("issuekey")'><a href="" style="display:none;" class="closeInfoList">通过</a> <a href="" style="display:none;"  class="reopenInfoList">| 不通过</a></div></td>
+						
 			</tr>
 			#end
+			#end
     </table>
-    #end
+    
     </div>
     </div>
     </center>

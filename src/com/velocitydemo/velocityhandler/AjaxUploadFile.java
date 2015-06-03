@@ -67,6 +67,7 @@ public class AjaxUploadFile extends VelocityViewServlet {
 
 		// Create a new file upload handler
 		ServletFileUpload upload = new ServletFileUpload(factory);
+		upload.setHeaderEncoding("UTF-8"); 
 		// maximum file size to be uploaded.
 		upload.setSizeMax(maxFileSize);
 

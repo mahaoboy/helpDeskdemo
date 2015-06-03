@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.apache.velocity.Template;
 import org.apache.velocity.app.Velocity;
 import org.apache.velocity.app.VelocityEngine;
@@ -19,6 +20,7 @@ import org.apache.velocity.context.Context;
 import org.apache.velocity.tools.view.VelocityViewServlet;
 
 public class CreateIssueEvent extends VelocityViewServlet {
+	private static Logger logger = Logger.getLogger(CreateIssueEvent.class);
 	private IssueInfo issueInfo = new IssueInfo();
 	private static final long serialVersionUID = 1L;
 	private VelocityEngine velo;
@@ -30,7 +32,9 @@ public class CreateIssueEvent extends VelocityViewServlet {
 	private static String userName = StaticConstantVar.userName;
 	private static String userPassword = StaticConstantVar.userPassword;
 	private static String userDisplayName = StaticConstantVar.userDisplayName;
+	private static String userMailAdd = StaticConstantVar.userMailAdd;
 	private String[] checkPat = StaticConstantVar.checkPat;
+	private String[] numberCheckPat = StaticConstantVar.numberPat;
 
 	private String PROPERTYNAME = StaticConstantVar.JIRA_PROPERTYNAME;
 	private static HashMap<String, String> properties = new HashMap<String, String>();
@@ -70,11 +74,12 @@ public class CreateIssueEvent extends VelocityViewServlet {
 			this.Project = properties.get("Project");
 			// this.Username = properties.get("Username");
 			// this.Password = properties.get("Password");
-			issueInfo.setAduserName(properties.get("域用户姓名"));
-			issueInfo.setUserInputName(properties.get("姓名"));
 			issueInfo.setDepartmentName(properties.get("申请部门"));
-			issueInfo.setInformationName(properties.get("联系方式"));
-			issueInfo.setEventType(properties.get("事件类型"));
+			//issueInfo.setInformationName(properties.get("联系方式"));
+			issueInfo.setEventType(properties.get("桌面请求类型"));
+			issueInfo.setSpecificDescription(properties.get("描述"));
+			issueInfo.setRank(properties.get("职级"));
+			issueInfo.setFee(properties.get("费用"));
 			issueInfo.setIssuetype(properties.get("issueType"));
 			issueInfo.setJirasite(jirasiteUrl);
 			issueInfo.setProject(Project);
@@ -93,6 +98,7 @@ public class CreateIssueEvent extends VelocityViewServlet {
 		String aduname = null;
 		String adpassword = null;
 		String displayName = null;
+		String mailAdd = null; 
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			aduname = IsLoggedIn.getUserInfo(this, response, request, userName);
@@ -100,6 +106,9 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					userPassword);
 			displayName = IsLoggedIn.getUserInfo(this, response, request,
 					userDisplayName);
+			mailAdd = IsLoggedIn.getUserInfo(this, response, request,
+					userMailAdd);
+			logger.debug(mailAdd + "xxxxxxxxxxx");
 			ctx.put("aduname", displayName);
 
 			issueInfo.setUsername(aduname);
@@ -132,29 +141,31 @@ public class CreateIssueEvent extends VelocityViewServlet {
 					: request.getParameter("issuetype");
 			String department = request.getParameter("department").isEmpty() ? ""
 					: request.getParameter("department");
-			String information = request.getParameter("information").isEmpty() ? ""
-					: request.getParameter("information");
-			String userInputName = request.getParameter("userInputName").isEmpty() ? ""
-					: request.getParameter("userInputName");
-			
+			String information = mailAdd;
+			String rankString = request.getParameterMap().containsKey("rank") ?  request.getParameter("rank") : "" ;
+			String feeString = request.getParameterMap().containsKey("fee") ?  request.getParameter("fee") : "" ;
 			String checkString = information + department + issuetype
-					+ description + summary + userInputName;
+					+ description + summary + rankString + feeString;
 
 			// Map<String, Object> infoList = new HashMap<String, Object>();
 			if (jirasiteUrl.isEmpty() || Project.isEmpty() || summary.isEmpty()
 					|| description.isEmpty() || issuetype.isEmpty()
-					|| information.isEmpty() || department.isEmpty() || userInputName.isEmpty()) {
+					|| information.isEmpty() || department.isEmpty() || feeString.isEmpty() || rankString.isEmpty()) {
 				String warn = "创建失败，字段不能为空";
 				ctx.put("warn", warn);
 			} else if (!CommonUtil.checkStringValidation(checkString, checkPat)) {
 				ctx.put("warn",
 						"输入字符不能包含以下字符：" + StringUtils.join(checkPat, " "));
+			}else if (!CommonUtil.checkStringValidation(feeString,
+					numberCheckPat)) {
+				ctx.put("warn",
+						"费用字段输入字符只能是数字");
 			} else {
 				String responseStr = "";
 				try {
 					responseStr = issueInfo.createIssue(jirasiteUrl, Project,
 							summary, description, issuetype, aduname,
-							adpassword, information, department, displayName, userInputName);
+							adpassword, information, department, displayName, feeString, rankString);
 
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
@@ -188,17 +199,21 @@ public class CreateIssueEvent extends VelocityViewServlet {
 			ctx.put("summary", summary);
 			ctx.put("description", description);
 			ctx.put("department", department);
-			ctx.put("information", information);
 			ctx.put("issuetype", issuetype);
 		}
 		// read file store
 		Vector itemlist;
+		Vector departMent;
 		try {
 			itemlist = issueInfo.getEventTypes();
+			departMent = issueInfo.getCreateMeta(issueInfo.getDepartmentName());
 			ctx.put("itemlist", itemlist);
-		} catch (IOException e1) {
+			ctx.put("departmentitem", departMent);
+		} catch (Exception e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+			String warn = "从JIRA获取信息失败";
+			ctx.put("warn", warn);
 		}
 
 		response.setContentType("text/html; charset=utf-8");

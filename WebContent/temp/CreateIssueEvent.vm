@@ -19,27 +19,46 @@
   #parse("HelpDesk.vm")
 	<center>
 	
-	<Span id="title" style="float: left; margin-left: 170px">创建事件</span>
+	<Span id="title" style="float: left; margin-left: 170px">创建桌面请求</span>
     <form id="createIssue" class="aui" method="post" action="AjaxCreateIssueEvent">
 		<div class="field-group">
-             <label for="content">事件主题:</label>
+             <label for="content">主题:</label>
              <input type="text" id="summary" name="summary" class="text" value="#if($summary)$summary#end">
         </div>
-		<div class="field-group">
-             <label for="content">姓名:</label>
-             <input type="text" id="userInputName" name="userInputName" class="text" value="#if($userInputName)$userInputName#end">
-        </div>
+        
         <div class="field-group">
-             <label for="content">申请部门:</label>
-             <input type="text" id="department" name="department" class="text" value="#if($department)$department#end">
+             <label for="content">报告人:</label>
+             <span>$aduname</span>
         </div>
+        
+        <div class="field-group">
+             <label for="content">职级:</label>
+             <input type="text" id="rank" name="rank" class="text" value="#if($rank)$rank#end">
+        </div>
+        
+        <div class="field-group">
+             <label for="content">费用:</label>
+             <input type="text" id="fee" name="fee" class="text" value="#if($fee)$fee#end">
+        </div>
+
+        #if($departmentitem)
+         <div class="field-group">
+             <label for="content">部门:</label>
+			 <select name="department" id="department">
+					#foreach ($content1 in $departmentitem)
+                  <option value="$content1" #if($department&&$department==$content1) selected="selected" #end >$content1</option>
+                  #end
+                  </select>
+          </div>
+        #end
+        <!--
         <div class="field-group">
              <label for="content">联系方式:</label>
-             <input type="text" id="information" name="information" class="text" value="#if($information)$information#end">
-        </div>
+             <label>#if($information)$information#end</label>
+        </div> -->
         #if($itemlist)
          <div class="field-group">
-             <label for="content">事件类型:</label>
+             <label for="content">桌面请求类型:</label>
 			 <select name="issuetype" id="issuetype">
 					#foreach ($content in $itemlist)
                   <option value="$content" #if($issuetype&&$issuetype==$content) selected="selected" #end >$content</option>
@@ -48,21 +67,22 @@
           </div>
         #end
 		<div class="field-group">
-             <label for="content">事件描述:</label>
-             <input type="text" id="description" name="description" class="text" value="#if($description)$description#end">
+             <label for="content" style="float:left;">桌面变更请求原因及内容详细描述:</label>
+             <br />
+             <textarea rows="5" cols="70" id="description" name="description" class="text">#if($description)$description#end</textarea>
         </div>
 		
-		<div class="field-group" id="attachmentList">
+		<div class="field-group" id="attachmentList" style="margin-top:100px">
              <label for="content" style="float: left;">附件:</label>
              
         </div>
 
  
         <div class="field-group">
-             <input type="submit" id="createIssueSubmitButton" style="width:100px; float: left; margin-left: 150px" value="创建事件" class="button">
+             <input type="submit" id="createIssueSubmitButton" style="width:100px; float: left; margin: 60px 0 0 150px;" value="创建事件" class="button">
         </div>
     </form>
-    <div style="float:left; margin: -200px 0 0 300px;">
+    <div style="float:left; margin: -100px 0 0 0px;">
     <span style="float: left">添加附件</span>
     <form id="uploadFileForm" action='AjaxUploadFile' method='post' enctype='multipart/form-data' style="float: left; margin: 0px 0px 0px 20px;">
     	<input id="uploadFileInput" type='file' name='file' size='50' />

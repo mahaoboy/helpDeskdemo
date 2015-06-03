@@ -20,6 +20,7 @@ public class HelpDesk extends VelocityViewServlet {
 	private String path;
 	private String loginPath = StaticConstantVar.loginPath;
 	private static String userName = StaticConstantVar.userName;
+	private static String userDisplayName = StaticConstantVar.userDisplayName;
 
 	public void init() throws ServletException {
 		this.velo = new VelocityEngine();// velocity“˝«Ê∂‘œÛ
@@ -41,9 +42,12 @@ public class HelpDesk extends VelocityViewServlet {
 			HttpServletResponse response, Context ctx) {
 		String meth = request.getMethod();
 		String uname = "";
+		String displayName = null;
 
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			uname = IsLoggedIn.getUserInfo(this, response, request, userName);
+			displayName = IsLoggedIn.getUserInfo(this, response, request,
+					userDisplayName);
 		} else {
 			try {
 				response.sendRedirect(loginPath);
@@ -65,7 +69,7 @@ public class HelpDesk extends VelocityViewServlet {
 		} else if (meth.equals("GET")) {
 		}
 
-		ctx.put("aduname", uname);
+		ctx.put("aduname", displayName);
 		response.setContentType("text/html; charset=gb2312");
 		Template template = new Template();
 		try {

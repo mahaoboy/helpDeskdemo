@@ -1,6 +1,8 @@
 package com.velocitydemo.velocityhandler;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -47,7 +49,8 @@ public class TransitionIssues extends HttpServlet {
 		path = this.getServletContext().getRealPath("/");
 		// String path =
 		// this.getClass().getClassLoader().getResource("").getPath();
-		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path + StaticConstantVar.tempPath);
+		prop.setProperty(Velocity.FILE_RESOURCE_LOADER_PATH, path
+				+ StaticConstantVar.tempPath);
 		prop.setProperty(Velocity.INPUT_ENCODING, "GBK");
 		prop.setProperty(Velocity.OUTPUT_ENCODING, "UTF-8");
 
@@ -70,12 +73,20 @@ public class TransitionIssues extends HttpServlet {
 					+ properties.get("URL") + ":" + properties.get("Port")
 					+ "/";
 			issueInfo.setJirasite(jirasiteUrl);
+			issueInfo.setReasonOfNotPass(properties.get("未通过原因"));
 		}
 	}
 
 	@Override
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
+		try {
+			request.setCharacterEncoding("UTF-8");
+		} catch (UnsupportedEncodingException e2) {
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+
 		if (IsLoggedIn.checkLogin(this, response, request)) {
 			String uname = IsLoggedIn.getUserInfo(this, response, request,
 					userName);
@@ -83,28 +94,33 @@ public class TransitionIssues extends HttpServlet {
 					userPassword);
 			issueInfo.setUsername(uname);
 			issueInfo.setPassword(upassword);
-			
+
 			String issueKey = request.getParameter("issueKey").isEmpty() ? ""
 					: request.getParameter("issueKey");
 			String transitionId = request.getParameter("transitionId")
 					.isEmpty() ? "" : request.getParameter("transitionId");
-			
-
-			response.setCharacterEncoding("UTF-8");
+			String reasonDetail = request.getParameter("reasonDetail")
+					.isEmpty() ? "" : request.getParameter("reasonDetail");
+			reasonDetail = URLDecoder.decode(reasonDetail, "UTF-8");
 			
 			if (!issueKey.isEmpty() && !transitionId.isEmpty()) {
-				
+
 				JSONObject transitionInfoJson = new JSONObject();
 				JSONObject itemContent = new JSONObject();
-				
+
 				try {
-					if (issueInfo.transitionIssue(issueKey, transitionId)) {
+					if (issueInfo.transitionIssue(issueKey, transitionId,
+							reasonDetail)) {
 						itemContent.put("result", "sucess");
 						itemContent.put("issuekey", issueKey);
-						HashMap<Object, Object> issueInfoItem = (HashMap<Object, Object>) issueInfo.getIssueInfo(issueInfo.getJirasite(),  issueKey,
-								issueInfo.getUsername(), issueInfo.getPassword());
+						HashMap<Object, Object> issueInfoItem = (HashMap<Object, Object>) issueInfo
+								.getIssueInfo(issueInfo.getJirasite(),
+										issueKey, issueInfo.getUsername(),
+										issueInfo.getPassword());
 						itemContent.put("status", issueInfoItem.get("status"));
-					}else{
+						itemContent.put("reasonDetailString",
+								issueInfoItem.get("reasonDetailString"));
+					} else {
 						itemContent.put("result", "failed");
 					}
 					transitionInfoJson.put("content", itemContent);
@@ -112,8 +128,9 @@ public class TransitionIssues extends HttpServlet {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
+
 				response.setContentType("application/json");
+				response.setContentType("text/html; charset=utf-8");
 				response.getWriter().write(transitionInfoJson.toString());
 			} else {
 				response.getWriter().write("");
